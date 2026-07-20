@@ -8,9 +8,22 @@ disable-model-invocation: true
 
 After brainstorming or planning with the user, break the conversation into ClickUp subtasks.
 
+## Configuration
+
+Company-specific values (backlog folder, Area options) are intentionally NOT in this file. Read `config.local.json` next to this SKILL.md:
+
+```json
+{
+  "backlogFolder": "<folder path, e.g. Team/Backlog>",
+  "areas": ["<area>", "<area>", "..."]
+}
+```
+
+If the file is missing, ask the user for the backlog folder path and the list of Area options before proceeding.
+
 ## Backlog location
 
-All tasks live in the **"Dev - Frontend/Backlog"** folder in ClickUp. Use the ClickUp MCP tools to find the folder and create tasks there.
+All tasks live in the folder named by `backlogFolder` in `config.local.json`. Use the ClickUp MCP tools to find the folder and create tasks there.
 
 ## Structure
 
@@ -26,7 +39,7 @@ All tasks live in the **"Dev - Frontend/Backlog"** folder in ClickUp. Use the Cl
 | Description   | Yes      | See format below.                                                                                                                                        |
 | Sprint points | No       | Only if user requests. Modified Fibonacci: 0.5, 1, 2, 3, 5, 8, 13.                                                                                       |
 | Stakeholders  | Ask      | Always ask the user who should be stakeholder before creating.                                                                                           |
-| Areas         | Yes      | Pick the best fit: `Website`, `Admin Dashboard`, `Account Dashboard`, `Operations`, or `All`. Do not default — choose based on what the subtask affects. |
+| Areas         | Yes      | Pick the best fit from the `areas` list in `config.local.json`. Do not default — choose based on what the subtask affects.                                |
 
 ## Sprint point guide (when requested)
 
@@ -94,7 +107,7 @@ If the user passes arguments directly (e.g. `/clickup-tasks convert these three 
 ---
 **Name:** Subtask name in sentence case
 
-**Areas:** Website
+**Areas:** [chosen area]
 
 **Stakeholders:** none
 
@@ -130,4 +143,4 @@ If the user has been discussing a broader project and wants to extract multiple 
 
 Always show the **full value of every field you intend to populate** before calling any MCP tool. Do not summarize or abbreviate — the user is reviewing the exact content that will be submitted. Wait for explicit confirmation ("yes", "create it", "looks good", etc.) before creating.
 
-After approval, create tasks via the ClickUp MCP tools in the **Dev - Frontend/Backlog** folder using the exact content shown in the preview.
+After approval, create tasks via the ClickUp MCP tools in the `backlogFolder` (from `config.local.json`) using the exact content shown in the preview.

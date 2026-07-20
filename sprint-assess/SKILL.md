@@ -9,9 +9,24 @@ Evaluate every unassigned task in the current sprint and score how confidently a
 
 ---
 
+## Configuration
+
+Company-specific ClickUp identifiers are intentionally NOT in this file. Read `config.local.json` next to this SKILL.md:
+
+```json
+{
+  "space": { "name": "<space name>", "id": "<space id>" },
+  "sprintsFolder": { "name": "<folder name>", "id": "<folder id>" }
+}
+```
+
+If the file is missing, ask the user for the ClickUp space and sprints folder (name + ID) before proceeding.
+
+---
+
 ## Step 1 — Find the current sprint
 
-Fetch the workspace hierarchy for the **Dev - Frontend** space (`90144316847`), filtered to the **Sprints - 2026** folder (`90147472224`). Parse the date ranges from the sprint list names (format: `Sprint N (M/D - M/D)`). The current sprint is the one whose date range contains today's date.
+Fetch the workspace hierarchy for the space given by `space` in `config.local.json`, filtered to the folder given by `sprintsFolder`. Parse the date ranges from the sprint list names (format: `Sprint N (M/D - M/D)`). The current sprint is the one whose date range contains today's date.
 
 If no sprint matches today (e.g. between sprints), use the next upcoming sprint. If ambiguous, ask the user.
 

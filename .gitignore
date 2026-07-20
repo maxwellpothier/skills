@@ -3,3 +3,6 @@ node_modules/
 *.log
 .env
 *.local
+
+# Per-skill local config (real company values); each skill ships placeholders in SKILL.md
+config.local.json
