@@ -1,6 +1,6 @@
 ---
 name: vercel
-description: Snapshot the latest 15 Vercel builds for the configured project — table with branch link, status, who pushed, how long it ran, and a one-line explanation for any failure. Use when the user invokes /vercel or asks to check Vercel builds/deployments.
+description: Snapshot the latest 15 Vercel builds for the configured project — table with branch link, status, who pushed, how long it ran, and footnote markers for any failures. Use when the user invokes /vercel or asks to check Vercel builds/deployments.
 ---
 
 # Vercel build snapshot
@@ -41,15 +41,7 @@ Company-specific values (team, project names) are intentionally NOT in this file
    - **Started**: `NOW_MS - createdAt`, largest unit only — `4m ago`, `1h ago`, `3d ago` (`<1m ago` under a minute). Left blank for `BUILDING`/`QUEUED` rows — Ran already shows the elapsed time.
    - Format Ran durations as `2m 49s` / `1h 16m` / `3d` (two largest units, space-separated, no decimals).
 
-4. **Explain failures**: for each `ERROR` row, fetch build logs and summarize the cause in one line (the first genuine error — failed test, lint error, module not found — not the generic "Build failed" trailer):
-
-   ```bash
-   vercel inspect --logs "https://<url>" --scope "$SCOPE" 2>&1 | tail -100
-   ```
-
-   Multiple failures can be fetched in parallel.
-
-5. **Render** the answer as just this — no extra narration:
+4. **Render** the answer as just this — no extra narration:
    - Header line: project + `Snapshot at <local time>`.
    - Table, newest first:
 
@@ -58,4 +50,12 @@ Company-specific values (team, project names) are intentionally NOT in this file
      | [branch](https://<branchAlias>) | ✅ Ready / 🔨 Building / ❌ Failed¹ / ⛔ Canceled | Taylor | 5m 3s | [link](https://<branchAlias>) | 4m ago |
 
      The Deployment column links the branch-alias URL (`meta.branchAlias`, falling back to the deployment `url` if absent) as `[link](…)`; leave it blank for default-branch (`master`/`main`) rows — the production URL is already known. Prefix the branch name with 🚀 on the one row currently serving production — the equivalent of the Vercel dashboard's blue "Production" badge: the newest `READY` deployment with `target == "production"` (at most one row; none if no production build is in the list). Caveat: `vercel ls` has no current-production flag, so after an instant rollback/promotion this heuristic can mark the wrong row. No other production/preview marking. If the same branch appears more than once, still list every row.
-   - Failures use footnote notation: number each failed row's status with a unicode superscript (`❌ Failed¹`, `❌ Failed²`, …, in table order), then under the table list one line per footnote: `¹ <one-line cause>`. Use the unicode characters (¹ ² ³ ⁴), not `[^1]` markdown footnotes — the latter don't render in the terminal. No footnotes section when nothing failed.
+   - Failures use footnote notation: number each failed row's status with a unicode superscript (`❌ Failed¹`, `❌ Failed²`, …, in table order). Use the unicode characters (¹ ² ³ ⁴), not `[^1]` markdown footnotes — the latter don't render in the terminal. Do not fetch logs or explain the cause up front — just the marker. No footnotes section when nothing failed.
+
+5. **On request** — if the user asks why a build failed (e.g. "why did 3 fail", "what happened to the failed one"), fetch that deployment's logs and summarize the cause in one line (the first genuine error — failed test, lint error, module not found — not the generic "Build failed" trailer):
+
+   ```bash
+   vercel inspect --logs "https://<url>" --scope "$SCOPE" 2>&1 | tail -100
+   ```
+
+   Multiple failures asked about at once can be fetched in parallel.
