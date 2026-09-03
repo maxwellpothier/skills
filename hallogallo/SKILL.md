@@ -6,9 +6,23 @@ disable-model-invocation: true
 
 # Hallogallo
 
-Max drives; you ride shotgun. Never write implementation code until he has approved a written plan. Every phase produces a markdown artifact he reviews — the artifact, not the chat, is the shared state between you.
+Max drives; you ride shotgun. Never write implementation code until he has approved a written plan. Every phase produces a document he reviews — the document, not the chat, is the shared state between you.
 
 Write everything — artifacts and messages alike — in the plainest language you can manage: short sentences, ordinary words over jargon, one idea at a time. Simple means all the same facts with fewer barriers, not less information (the wtf skill's principle). These docs exist to be reviewed quickly; if Max has to reread something — or invoke wtf on it — that's a defect.
+
+## How every doc is delivered and reviewed
+
+Each phase doc exists twice:
+
+1. **Markdown in `notes/<task-slug>/`** — the source of truth.
+2. **A published Artifact** of the same content — Max's review surface. Load the `artifact-design` skill before writing the HTML, put the file next to the markdown (`research.html`, `plan.html`, `walkthrough.html`), publish it, and hand Max the URL. Keep one visual identity across a task's docs so they read as a set, and link each doc to the previous one.
+
+Never edit only the HTML. Change the markdown, regenerate the page, republish to the same URL — after every round, so the page never lags.
+
+Max leaves comments on the artifact. Two kinds arrive:
+
+- **Plain comments.** The moment Max mentions he left comments, read the artifact's comment threads without waiting to be asked again. Answer each one here in chat, directly: name what the comment was anchored to, then give the answer in full — the chat is where he reads the response, so "see the updated doc" is not an answer. Then fold the answer into the doc. You cannot reply to or resolve these threads; say which stay open so he can resolve them himself.
+- **"Send to Claude" threads.** These reach you directly. Reply in-thread with anything still unanswered, make the change if one is asked for, then resolve the thread.
 
 ## 0. Kickoff
 
@@ -21,7 +35,7 @@ Back up from the problem before diving in. The stated task is often a symptom �
 
 The codebase isn't the only source. When the task touches a library, API, or established pattern, read the current documentation and best practices online rather than trusting recollection — libraries drift, and the doc beats the memory of the doc. External findings belong in the research doc alongside the codebase findings, cited.
 
-Each task gets its own directory under the git-ignored `notes/`, named by the slug confirmed at kickoff; this doc and the later plan live together there. Write the findings, then stop for Max's review. The research is his surface for catching your misunderstandings — if it's wrong, the plan and the implementation will be wrong.
+Each task gets its own directory under the git-ignored `notes/`, named by the slug confirmed at kickoff; this doc and the later plan live together there. Write the findings, publish the artifact, then stop for Max's review. The research is his surface for catching your misunderstandings — if it's wrong, the plan and the implementation will be wrong. When a comment reveals a concept the doc assumed, add a plain-language section to the doc rather than answering only in chat.
 
 ## 2. Plan → `notes/<task-slug>/plan.md`
 
@@ -37,7 +51,7 @@ That line is the gate. Obey whatever it currently says, at any point in the sess
 
 ## 3. Annotate (loop)
 
-Max reviews the plan in his editor and adds inline notes — or asks to be grilled on it instead (grill-me). When he sends you back to the document: address every note, update the plan, do not implement. His notes overrule the plan, but if a note conflicts with evidence you have, push back in the doc rather than silently complying.
+Max reviews the plan on its artifact and leaves comments — or asks to be grilled on it instead (grill-me). When he sends you back to the document: address every comment, update the markdown, republish, do not implement. His notes overrule the plan, but if a note conflicts with evidence you have, push back in the doc rather than silently complying.
 
 This repeats until Max says the plan is right — expect multiple rounds. It is not good enough until he says it is.
 
@@ -62,4 +76,4 @@ Max's corrections during this phase will be terse ("wider", "you missed X") — 
 
 ## 6. Walkthrough → `notes/<task-slug>/walkthrough.md`
 
-After the done-audit passes, write a walkthrough of how the implementation went, told as a story: what changed and why, in the order the diff is best read, where the plan was deviated from and what surprised you, and anything worth verifying by hand before this ships. Short beats complete — link to the plan for detail rather than restating it.
+After the done-audit passes, write a walkthrough of how the implementation went, told as a story: what changed and why, in the order the diff is best read, where the plan was deviated from and what surprised you, and anything worth verifying by hand before this ships. Short beats complete — link to the plan for detail rather than restating it. Publish it like the others.
