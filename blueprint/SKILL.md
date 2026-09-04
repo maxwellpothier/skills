@@ -63,7 +63,7 @@ template. The proposal must answer:
   let the user strike them; never propose one that is obviously pointless.
   No gate carries a removal condition; teams take gates down as trust grows.
 - **Now, later, stays human.** "Now" is the smallest set of pieces that
-  removes the pain, often a single piece and a single gate. Everything else the
+  removes the pain. Everything else the
   interview surfaced goes under "later" so it is not lost.
 - **A dry-run switch**, required in "now" whenever any piece touches an
   external system. With it on, the layer prints what it would have done and
