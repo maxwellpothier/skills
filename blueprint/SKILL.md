@@ -1,7 +1,7 @@
 ---
 name: blueprint
 description: Interviews a person or team about the work they are on, finds the repeating unit worth automating, and proposes a Claude Code layer around it with human gates. Writes the proposal, stops for approval, builds it on a branch, then rehearses it in dry-run.
-argument-hint: [what you're working on]
+argument-hint: "[what you're working on]"
 disable-model-invocation: true
 ---
 
