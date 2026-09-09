@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Hostile senior-dev review of a branch's diff vs the repo's default branch, with every finding verified before reporting. Manual only. Takes a branch name and optional ClickUp task ID.
+description: Hostile senior-dev review of a branch's diff vs the repo's default branch, with every finding verified before reporting, then an interactive walkthrough of findings one at a time. Manual only. Takes a branch name and optional ClickUp task ID.
 disable-model-invocation: true
 ---
 
@@ -14,4 +14,10 @@ Review the diff as a hostile reviewer who hates this implementation. Look for lo
 
 Verify every concern before reporting: re-read the actual code (not just the hunk), trace the call path, check whether it's handled elsewhere, web-search if it hinges on framework/library/platform behavior. Drop anything you can't confirm or misread, and drop pure style nits. For each surviving finding, propose 1–2 fixes (or describe the approach and tradeoffs if complex).
 
-Report findings grouped by severity (**Blocker** / **Should-fix** / **Nice-to-have**) with `file:line` citations. End with open questions for the author, and a one-line task-fit note if a task was provided. If nothing survives, say so briefly with a note on what you checked.
+Report the results as a conversation, not a dump:
+
+1. **Open with a summary.** A sentence or two on the overall shape of the change, then a numbered one-line list of the findings with severity labels (**Blocker** / **Should-fix** / **Nice-to-have**), most severe first. Include the one-line task-fit note here if a task was provided. No detail yet — this is the table of contents.
+2. **Walk through findings one at a time.** Present the first finding in full — what's wrong, why it matters, `file:line` citations, and the proposed fix(es) — then stop and wait for the user. They may ask questions, push back, or dismiss it as not actually important. Engage honestly: if their reasoning holds, agree and note why it was dismissed; if it doesn't, say so — don't fold just because they pushed. Only move to the next finding when they're ready.
+3. **Close with what stands.** After the last finding, give a short wrap-up: which findings survived the discussion and which were dismissed (with the user's reasoning), so it can be acted on or pasted into the PR.
+
+If nothing survives verification, say so briefly with a note on what you checked — no walkthrough needed.
