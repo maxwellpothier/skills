@@ -1,0 +1,285 @@
+<title>Open Threads</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f4f5f8; --surface: #ffffff; --surface-2: #eceef4;
+    --ink: #1c2233; --muted: #66708a; --line: #dce0ea;
+    --accent: #2b6b8e; --accent-ink: #ffffff;
+    --pin: #b8731c; --good: #2e7d5b; --warn: #b54a3f; --snooze: #6b5ca5; --quiet: #8b93a7;
+    --focus: #2b6b8e;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #131720; --surface: #1b2130; --surface-2: #232b3d;
+      --ink: #e4e8f2; --muted: #98a1b8; --line: #2b3345;
+      --accent: #6fb0d2; --accent-ink: #0f1620;
+      --pin: #e0a04a; --good: #5fb08a; --warn: #e07b70; --snooze: #a79ae0; --quiet: #6f7891;
+      --focus: #6fb0d2;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #131720; --surface: #1b2130; --surface-2: #232b3d;
+    --ink: #e4e8f2; --muted: #98a1b8; --line: #2b3345;
+    --accent: #6fb0d2; --accent-ink: #0f1620;
+    --pin: #e0a04a; --good: #5fb08a; --warn: #e07b70; --snooze: #a79ae0; --quiet: #6f7891;
+    --focus: #6fb0d2;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font: 15px/1.5 "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+    padding-block: 32px 64px; padding-inline: 20px;
+  }
+  .mono { font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace; font-size: 12.5px; }
+  main { max-width: 880px; margin: 0 auto; display: grid; gap: 28px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 24px; }
+  header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  header .date { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .counts { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 13.5px; margin-left: auto; }
+  .counts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .live { color: var(--muted); font-size: 13.5px; }
+  .live .mono { color: var(--ink); }
+  section { display: grid; gap: 10px; }
+  .sec-head { display: flex; align-items: baseline; gap: 10px; }
+  .sec-head h2 { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .sec-head .n { color: var(--quiet); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  details.sec > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; }
+  details.sec > summary::-webkit-details-marker { display: none; }
+  details.sec > summary::before { content: "▸"; color: var(--quiet); font-size: 12px; }
+  details.sec[open] > summary::before { content: "▾"; }
+  details.sec > summary h2 { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  details.sec > .list { margin-top: 10px; }
+  .list { display: grid; gap: 10px; }
+  .empty { color: var(--quiet); font-size: 13.5px; padding: 6px 0; }
+
+  .thread {
+    background: var(--surface); border: 1px solid var(--line); border-left-width: 4px; border-radius: 6px;
+    padding: 14px 16px 12px 16px; display: grid; gap: 8px;
+  }
+  .thread[data-state="active"] { border-left-color: var(--accent); }
+  .thread[data-state="pinned"] { border-left-color: var(--pin); }
+  .thread[data-state="finished"] { border-left-color: var(--quiet); }
+  .thread[data-state="snoozed"] { border-left-color: var(--snooze); }
+  .thread[data-state="done"] { border-left-color: var(--good); }
+  .thread[data-state="dropped"] { border-left-color: var(--warn); }
+  .thread[data-state="inbox"] { border-left-color: var(--line); background: var(--surface-2); }
+  .thread.closed .rundown, .thread.closed .next, .thread.closed .foot { display: none; }
+  .thread.closed { opacity: 0.85; }
+  .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
+  .top h3 { font-size: 16px; font-weight: 600; flex: 1 1 260px; }
+  .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
+  .chip.state { font-weight: 500; }
+  .thread[data-state="pinned"] .chip.state { color: var(--pin); }
+  .thread[data-state="snoozed"] .chip.state { color: var(--snooze); }
+  .thread[data-state="done"] .chip.state { color: var(--good); }
+  .thread[data-state="dropped"] .chip.state { color: var(--warn); }
+  .when { color: var(--muted); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .rundown { margin: 0; max-width: 68ch; }
+  .next { margin: 0; max-width: 68ch; display: flex; gap: 8px; }
+  .next .lbl { color: var(--accent); font-weight: 600; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 2px; white-space: nowrap; }
+  .note { margin: 0; max-width: 68ch; color: var(--muted); font-style: italic; }
+  .dumps { margin: 0; padding-left: 18px; color: var(--muted); }
+  .foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12.5px; color: var(--muted); }
+  .badge { border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .foot a { color: var(--accent); text-decoration: none; }
+  .foot a:hover { text-decoration: underline; }
+  .resume { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+  .resume code { background: var(--surface-2); padding: 2px 6px; border-radius: 4px; color: var(--ink); }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  button, select {
+    font: inherit; font-size: 12.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+    border-radius: 5px; padding: 3px 10px; cursor: pointer;
+  }
+  button:hover, select:hover { border-color: var(--accent); }
+  button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  button[disabled], select[disabled] { opacity: 0.5; cursor: default; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.quiet { color: var(--muted); }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+    background: var(--ink); color: var(--ground); padding: 8px 14px; border-radius: 6px; font-size: 13px;
+    opacity: 0; transition: opacity 160ms; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  .readonly { color: var(--muted); font-size: 13px; }
+  @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+  @media (max-width: 520px) { .resume { margin-left: 0; } .counts { margin-left: 0; } }
+</style>
+
+<main id="app"></main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script id="threads-data" type="application/json">__THREADS_DATA__</script>
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById("threads-data").textContent);
+  const app = document.getElementById("app");
+  const toastEl = document.getElementById("toast");
+  const actions = new Map();
+  let db = null;
+  let canWrite = true;
+
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const fmtDate = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return esc(iso);
+    const today = new Date(data.today + "T00:00:00");
+    const days = Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+    if (days <= 0) return "today";
+    if (days === 1) return "yesterday";
+    if (days < 7) return days + "d ago";
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  };
+  const toast = (msg) => { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => toastEl.classList.remove("show"), 1800); };
+
+  function effective(t) {
+    const a = actions.get(t.slug);
+    const out = { state: t.state, pinned: !!t.pinned, snoozeUntil: t.snoozeUntil || null };
+    if (a) {
+      if (a.action === "done") out.state = "done";
+      else if (a.action === "drop") out.state = "dropped";
+      else if (a.action === "restore") { out.state = t.state === "done" || t.state === "dropped" || t.state === "snoozed" ? "active" : t.state; out.snoozeUntil = null; }
+      else if (a.action === "snooze") { out.state = "snoozed"; out.snoozeUntil = a.until || null; }
+      else if (a.action === "pin") out.pinned = true;
+      else if (a.action === "unpin") out.pinned = false;
+      if (a.pinned !== undefined) out.pinned = !!a.pinned;
+    }
+    if (out.state === "snoozed" && out.snoozeUntil && out.snoozeUntil <= data.today) out.state = "active";
+    return out;
+  }
+
+  function snoozeDates() {
+    const base = new Date(data.today + "T00:00:00");
+    const iso = (d) => d.toISOString().slice(0, 10);
+    const tomorrow = new Date(base); tomorrow.setDate(base.getDate() + 1);
+    const monday = new Date(base); monday.setDate(base.getDate() + ((8 - base.getDay()) % 7 || 7));
+    const nextWeek = new Date(base); nextWeek.setDate(base.getDate() + 7);
+    return [["Tomorrow", iso(tomorrow)], ["Monday", iso(monday)], ["Next week", iso(nextWeek)]];
+  }
+
+  function threadHTML(t, eff) {
+    const shown = eff.pinned && (eff.state === "active" || eff.state === "finished") ? "pinned" : eff.state;
+    const closed = shown === "done" || shown === "dropped" || shown === "snoozed";
+    const stateLabel = { pinned: "pinned", finished: "looks finished", snoozed: "snoozed until " + (eff.snoozeUntil || "?"), done: "done", dropped: "dropped", inbox: "inbox" }[shown];
+    const links = (t.links || []).map((l) => l.url.startsWith("file://")
+      ? `<span class="mono" title="${esc(l.url.slice(7))}">${esc(l.label)}: ${esc(l.url.split("/").pop())}</span>`
+      : `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("");
+    const badges = (t.sources || []).map((s) => `<span class="badge">${esc(s)}</span>`).join("");
+    const dumps = (t.dumps || []).length ? `<ul class="dumps">${t.dumps.map((d) => `<li><span class="mono">${esc(fmtDate(d.at))}</span> ${esc(d.text)}</li>`).join("")}</ul>` : "";
+    const resume = t.sessionId ? `<span class="resume"><code class="mono">claude --resume ${esc(t.sessionId.slice(0, 8))}</code><button class="quiet" data-copy="claude --resume ${esc(t.sessionId)}" title="Copy full resume command">copy</button></span>` : "";
+    const snooze = snoozeDates().map(([label, iso]) => `<option value="${iso}">${label}</option>`).join("");
+    const controls = closed
+      ? `<button data-act="restore">Restore</button>`
+      : `<button data-act="done" class="primary">Done</button><button data-act="drop">Drop</button><button data-act="${eff.pinned ? "unpin" : "pin"}">${eff.pinned ? "Unpin" : "Pin"}</button><select data-act="snooze" aria-label="Snooze"><option value="">Snooze…</option>${snooze}</select>`;
+    return `<article class="thread${closed ? " closed" : ""}" data-slug="${esc(t.slug)}" data-state="${shown}">
+      <div class="top">
+        <h3>${esc(t.title)}</h3>
+        ${t.project ? `<span class="chip">${esc(t.project)}</span>` : ""}
+        ${stateLabel && shown !== "active" ? `<span class="chip state">${esc(stateLabel)}</span>` : ""}
+        <span class="when">${esc(fmtDate(t.lastActive))}</span>
+      </div>
+      ${t.rundown ? `<p class="rundown">${esc(t.rundown)}</p>` : ""}
+      ${t.next ? `<p class="next"><span class="lbl">Next</span><span>${esc(t.next)}</span></p>` : ""}
+      ${t.note ? `<p class="note">${esc(t.note)}</p>` : ""}
+      ${dumps}
+      <div class="foot">${badges}${t.branch ? `<span class="mono">${esc(t.branch)}</span>` : ""}${links}${resume}</div>
+      <div class="controls">${canWrite ? controls : `<span class="readonly">Read-only view</span>`}</div>
+    </article>`;
+  }
+
+  function section(title, items, opts = {}) {
+    const list = items.length ? items.map(([t, e]) => threadHTML(t, e)).join("") : `<div class="empty">${esc(opts.empty || "Nothing here.")}</div>`;
+    if (opts.collapsed) {
+      return `<details class="sec"${opts.open ? " open" : ""}><summary><h2>${esc(title)}</h2><span class="n">${items.length}</span></summary><div class="list">${list}</div></details>`;
+    }
+    return `<section><div class="sec-head"><h2>${esc(title)}</h2><span class="n">${items.length}</span></div><div class="list">${list}</div></section>`;
+  }
+
+  function render() {
+    const rows = (data.threads || []).map((t) => [t, effective(t)]);
+    const pinned = rows.filter(([, e]) => e.pinned && (e.state === "active" || e.state === "finished"));
+    const active = rows.filter(([, e]) => !e.pinned && e.state === "active");
+    const finished = rows.filter(([, e]) => !e.pinned && e.state === "finished");
+    const snoozed = rows.filter(([, e]) => e.state === "snoozed");
+    const closedRows = rows.filter(([, e]) => e.state === "done" || e.state === "dropped");
+    const inboxRows = (data.inbox || []).map((i) => [{ slug: i.slug, title: i.text, project: i.project, lastActive: i.at, state: i.state || "inbox", sources: ["dump"] }, effective({ slug: i.slug, state: i.state || "inbox" })]);
+    const inboxOpen = inboxRows.filter(([, e]) => e.state === "inbox" || e.state === "active");
+    const inboxClosed = inboxRows.filter(([, e]) => e.state !== "inbox" && e.state !== "active");
+    const live = (data.liveSessions || []);
+    const openCount = pinned.length + active.length;
+
+    app.innerHTML = `
+      <header>
+        <h1>Open Threads</h1>
+        <span class="date mono">${esc(data.today)}</span>
+        <div class="counts"><span><b>${openCount}</b> open</span><span><b>${inboxOpen.length}</b> inbox</span><span><b>${finished.length}</b> look finished</span><span><b>${snoozed.length}</b> snoozed</span></div>
+      </header>
+      ${live.length ? `<div class="live">Live right now: ${live.map((s) => `<span class="mono">${esc(s.name)}</span>${s.project ? " in " + esc(s.project) : ""}${s.idle ? " (idle)" : ""}`).join(", ")}</div>` : ""}
+      ${pinned.length ? section("Pinned", pinned) : ""}
+      ${section("Active", active, { empty: "No open threads. Enjoy it." })}
+      ${section("Inbox", inboxOpen, { empty: "Nothing dumped. Use /dump <thought> in any session." })}
+      ${section("Looks finished", finished, { collapsed: true, empty: "Every recent session read as ongoing." })}
+      ${section("Snoozed", snoozed, { collapsed: true })}
+      ${section("Done and dropped", closedRows.concat(inboxClosed), { collapsed: true })}
+    `;
+  }
+
+  async function write(slug, action, extra) {
+    if (!db) { toast("Not connected to storage; nothing saved."); return; }
+    const title = (data.threads.find((t) => t.slug === slug) || data.inbox.find((i) => i.slug === slug) || {}).title;
+    const doc = { slug, action, at: new Date().toISOString(), title: title || null, ...extra };
+    try {
+      await db.doc("actions/" + slug).set(doc);
+      toast({ done: "Marked done", drop: "Dropped", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
+    } catch (e) {
+      if (e && e.code === "invalid_argument") { canWrite = false; render(); }
+      toast("Couldn't save: " + (e && e.message ? e.message : "unknown error"));
+    }
+  }
+
+  app.addEventListener("click", (ev) => {
+    const copy = ev.target.closest("[data-copy]");
+    if (copy) {
+      const txt = copy.getAttribute("data-copy");
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast("Copied"), () => toast(txt));
+      return;
+    }
+    const btn = ev.target.closest("button[data-act]");
+    if (!btn) return;
+    const slug = btn.closest(".thread").dataset.slug;
+    write(slug, btn.dataset.act, {});
+  });
+  app.addEventListener("change", (ev) => {
+    const sel = ev.target.closest("select[data-act='snooze']");
+    if (!sel || !sel.value) return;
+    const slug = sel.closest(".thread").dataset.slug;
+    write(slug, "snooze", { until: sel.value });
+  });
+
+  render();
+
+  (async () => {
+    if (!window.claude || !window.claude.use) return;
+    db = await window.claude.use("db");
+    if (!db) return;
+    db.collection("actions").onSnapshot(
+      (snap) => {
+        actions.clear();
+        snap.docs.forEach((d) => { const body = d.data(); if (body && body.slug) actions.set(body.slug, body); });
+        render();
+      },
+      () => { toast("Live updates unavailable; reload to refresh."); }
+    );
+    const user = await window.claude.use("user");
+    if (user && user.can) {
+      const ok = await user.can("data.write");
+      if (ok === false) { canWrite = false; render(); }
+    }
+  })();
+})();
+</script>
