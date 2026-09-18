@@ -130,10 +130,12 @@ python3 ~/.claude/skills/threads/render.py --data "$SCRATCHPAD/threads-data.json
 With `--dry-run`: stop here, print the counts per section, and do not publish
 or write state.
 
-Publish with the Artifact tool: `file_path` the rendered page,
-`capabilities: {"db": {}, "user": {}}`, `url` from config when set. On the first
-publish pass `favicon: "🧵"` and a one-sentence description, then save the
-returned URL into `config.json` as `artifact_url`.
+When `config.artifact_url` is set, first `Artifact read` that URL: a session
+that has not viewed the live version gets its publish refused. Then publish
+with the Artifact tool: `file_path` the rendered page,
+`capabilities: {"db": {}, "user": {}}`, `url` from config. On the first publish
+(no `artifact_url`) pass `favicon: "🧵"` and a one-sentence description, then
+save the returned URL into `config.json` as `artifact_url`.
 
 ## 6. Reply
 
