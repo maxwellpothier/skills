@@ -11,7 +11,7 @@
     --warn: #8a5a00; --warn-soft: #f7ebd0;
     --err: #a3352d; --err-soft: #f8e1de;
     --lane-active: #0f5f68; --lane-pinned: #8a5a00; --lane-finished: #7a7f8e;
-    --lane-snoozed: #6b3fa0; --lane-done: #1f7a4d; --lane-dropped: #a3352d; --lane-inbox: #4b5060;
+    --lane-snoozed: #6b3fa0; --lane-inbox: #4b5060;
     --code-bg: #eeece7;
     --shadow: 0 1px 2px rgba(28,31,38,.06), 0 8px 24px -16px rgba(28,31,38,.25);
     color-scheme: light;
@@ -26,7 +26,7 @@
       --warn: #e2b04f; --warn-soft: #3a2f16;
       --err: #f08b82; --err-soft: #3d201d;
       --lane-active: #63c3c9; --lane-pinned: #e2b04f; --lane-finished: #85838d;
-      --lane-snoozed: #b592e6; --lane-done: #6fd39a; --lane-dropped: #f08b82; --lane-inbox: #b5b3ac;
+      --lane-snoozed: #b592e6; --lane-inbox: #b5b3ac;
       --code-bg: #242830;
       --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
       color-scheme: dark;
@@ -41,7 +41,7 @@
     --warn: #e2b04f; --warn-soft: #3a2f16;
     --err: #f08b82; --err-soft: #3d201d;
     --lane-active: #63c3c9; --lane-pinned: #e2b04f; --lane-finished: #85838d;
-    --lane-snoozed: #b592e6; --lane-done: #6fd39a; --lane-dropped: #f08b82; --lane-inbox: #b5b3ac;
+    --lane-snoozed: #b592e6; --lane-inbox: #b5b3ac;
     --code-bg: #242830;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
     color-scheme: dark;
@@ -84,7 +84,10 @@
   nav.rail a[data-lane="pinned"] .dot { border-color: var(--lane-pinned); background: var(--lane-pinned); }
   nav.rail a[data-lane="active"] .dot { border-color: var(--lane-active); }
   nav.rail a[data-lane="inbox"] .dot { border-color: var(--lane-inbox); border-style: dashed; }
-  nav.rail a[data-lane="done"] .dot, nav.rail a[data-lane="dropped"] .dot, nav.rail a[data-lane="snoozed"] .dot, nav.rail a[data-lane="finished"] .dot { border-color: var(--line-2); background: var(--surface-2); }
+  nav.rail a[data-lane="snoozed"] .dot, nav.rail a[data-lane="finished"] .dot { border-color: var(--line-2); background: var(--surface-2); }
+  nav.rail a[data-done] .dot { border-color: var(--ok); background: var(--ok); color: var(--surface); font-size: 10px; line-height: 1; }
+  nav.rail a[data-done] .dot::before { content: "\2713"; }
+  nav.rail a[data-done] span:last-child { text-decoration: line-through; text-decoration-color: var(--ink-3); color: var(--ink-3); }
   nav.rail a.muted { color: var(--ink-3); }
 
   main { display: grid; gap: 36px; min-width: 0; }
@@ -112,7 +115,9 @@
   .chip.lane { border-color: currentColor; }
   .chip.lane-active { color: var(--lane-active); } .chip.lane-pinned { color: var(--lane-pinned); }
   .chip.lane-finished { color: var(--lane-finished); } .chip.lane-snoozed { color: var(--lane-snoozed); }
-  .chip.lane-done { color: var(--lane-done); } .chip.lane-dropped { color: var(--lane-dropped); } .chip.lane-inbox { color: var(--lane-inbox); }
+  .chip.lane-inbox { color: var(--lane-inbox); }
+  .chip.done { color: var(--ok); background: var(--ok-soft); border-color: transparent; }
+  .card.done h3.title { color: var(--ink-3); text-decoration: line-through; text-decoration-color: var(--line-2); }
   .chips .when { margin-left: auto; color: var(--ink-3); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   h3.title { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: clamp(21px, 2.2vw, 26px); line-height: 1.15; margin: 0; text-wrap: balance; }
   .card.closed h3.title { font-size: 19px; }
@@ -190,11 +195,10 @@
 
   function effective(t) {
     const a = actions.get(t.slug);
-    const out = { state: t.state, pinned: !!t.pinned, snoozeUntil: t.snoozeUntil || null };
+    const out = { state: t.state, pinned: !!t.pinned, snoozeUntil: t.snoozeUntil || null, done: !!t.done };
     if (a) {
-      if (a.action === "done") out.state = "done";
-      else if (a.action === "drop") out.state = "dropped";
-      else if (a.action === "restore") { out.state = ["done", "dropped", "snoozed"].includes(t.state) ? "active" : t.state; out.snoozeUntil = null; }
+      if (a.action === "done" || a.action === "drop") out.done = true;
+      else if (a.action === "restore") { out.done = false; out.state = t.state === "snoozed" ? "active" : t.state; out.snoozeUntil = null; }
       else if (a.action === "snooze") { out.state = "snoozed"; out.snoozeUntil = a.until || null; }
       else if (a.action === "pin") out.pinned = true;
       else if (a.action === "unpin") out.pinned = false;
@@ -213,11 +217,11 @@
     return [["Tomorrow", iso(tomorrow)], ["Monday", iso(monday)], ["Next week", iso(nextWeek)]];
   }
 
-  const LANE_LABEL = { active: "Active", pinned: "Pinned", finished: "Looks finished", snoozed: "Snoozed", done: "Done", dropped: "Dropped", inbox: "Inbox" };
+  const LANE_LABEL = { active: "Active", pinned: "Pinned", finished: "Looks finished", snoozed: "Snoozed", inbox: "Inbox" };
 
   function cardHTML(t, e) {
     const l = lane(e);
-    const closed = ["done", "dropped", "snoozed"].includes(l);
+    const closed = e.done || l === "snoozed";
     const stateText = l === "snoozed" ? "snoozed until " + (e.snoozeUntil || "?") : LANE_LABEL[l];
     const links = (t.links || []).map((x) => x.url.startsWith("file://")
       ? `<span class="dep file" title="${esc(x.url.slice(7))}">${esc(x.label)} · <span class="mono">${esc(x.url.split("/").pop())}</span></span>`
@@ -227,8 +231,8 @@
     const resume = t.sessionId ? `<span class="resume">resume <code>claude --resume ${esc(t.sessionId.slice(0, 8))}</code><button class="copy" data-copy="claude --resume ${esc(t.sessionId)}" title="Copy the full command">Copy</button></span>` : "";
     const snooze = snoozeDates().map(([label, iso]) => `<option value="${iso}">${label}</option>`).join("");
     const controls = !canWrite ? `<span class="readonly">Read-only view</span>` : closed
-      ? `<button class="ghost" data-act="restore">Restore</button>`
-      : `<button class="primary" data-act="done">Done</button><button class="ghost" data-act="drop">Drop</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
+      ? `<button class="ghost" data-act="restore">${e.done ? "Undo" : "Restore"}</button>`
+      : `<button class="primary" data-act="done">Done</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
     const body = closed ? "" : `<div class="card-body">
         ${t.rundown ? `<p>${esc(t.rundown)}</p>` : ""}
         ${t.next ? `<div class="next"><h4>Next</h4><p>${esc(t.next)}</p></div>` : ""}
@@ -236,10 +240,10 @@
         ${dumps}
         ${links ? `<div class="links">${links}</div>` : ""}
       </div>`;
-    return `<section class="card${closed ? " closed" : ""}" id="t-${esc(t.slug)}" data-slug="${esc(t.slug)}">
+    return `<section class="card${closed ? " closed" : ""}${e.done ? " done" : ""}" id="t-${esc(t.slug)}" data-slug="${esc(t.slug)}">
       <div class="card-head">
         <div class="chips">
-          <span class="chip lane lane-${l}">${esc(stateText)}</span>
+          ${e.done ? `<span class="chip done">\u2713 Done</span>` : ""}<span class="chip lane lane-${l}">${esc(stateText)}</span>
           ${t.project ? `<span class="chip type">${esc(t.project)}</span>` : ""}
           ${badges}
           <span class="when">${esc(fmtDate(t.lastActive))}</span>
@@ -262,7 +266,7 @@
   function railHTML(groups) {
     return groups.filter(([, rows]) => rows.length).map(([key, rows, title]) =>
       `<div class="lane-h"><span>${esc(title || LANE_LABEL[key])}</span><span>${rows.length}</span></div>` +
-      rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-lane="${lane(e)}" class="${["done", "dropped", "snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(t.title)}</span></a>`).join("")
+      rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-lane="${lane(e)}"${e.done ? " data-done" : ""} class="${["snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(t.title)}</span></a>`).join("")
     ).join("");
   }
 
@@ -274,32 +278,30 @@
     });
     const by = (k) => rows.filter(([, e]) => lane(e) === k);
     const pinned = by("pinned"), active = by("active"), finished = by("finished"), snoozed = by("snoozed");
-    const closed = rows.filter(([, e]) => ["done", "dropped"].includes(e.state));
-    const inboxOpen = inboxRows.filter(([, e]) => ["inbox", "active"].includes(e.state));
-    const inboxClosed = inboxRows.filter(([, e]) => !["inbox", "active"].includes(e.state));
+    const inboxOpen = inboxRows;
     const live = data.liveSessions || [];
-    const open = pinned.length + active.length;
+    const doneCount = rows.concat(inboxRows).filter(([, e]) => e.done).length;
+    const open = pinned.concat(active).filter(([, e]) => !e.done).length;
 
     topEl.innerHTML = `
       <div class="eyebrow">${esc(longDate(data.today))} · every project under your roots</div>
       <h1>Open Threads</h1>
-      <p class="lede"><b>${open}</b> thread${open === 1 ? "" : "s"} open${pinned.length ? `, <b>${pinned.length}</b> pinned` : ""}${inboxOpen.length ? `, <b>${inboxOpen.length}</b> in the inbox` : ""}${finished.length ? `, and <b>${finished.length}</b> that look finished` : ""}${snoozed.length ? `. <b>${snoozed.length}</b> snoozed` : ""}.
-        Each card says where the work stood when the last session ended and what the next move is. Done, Drop, Pin and Snooze are remembered for the next run.</p>
+      <p class="lede"><b>${open}</b> thread${open === 1 ? "" : "s"} open${pinned.length ? `, <b>${pinned.length}</b> pinned` : ""}${inboxOpen.length ? `, <b>${inboxOpen.length}</b> in the inbox` : ""}${finished.length ? `, and <b>${finished.length}</b> that look finished` : ""}${snoozed.length ? `. <b>${snoozed.length}</b> snoozed` : ""}${doneCount ? `. <b>${doneCount}</b> checked off` : ""}.
+        Each card says where the work stood when the last session ended and what the next move is. Done, Pin and Snooze are remembered for the next run.</p>
       <div class="meta-row">
         ${live.length ? `<span>Live now: ${live.map((s) => `<b class="mono">${esc(s.name)}</b>${s.project ? " in " + esc(s.project) : ""}${s.idle ? " (idle)" : ""}`).join(", ")}</span>` : `<span>No other session is live right now</span>`}
         <span>Rebuilt with <b>/threads</b></span>
         <span>Add a thought with <b>/dump</b></span>
       </div>`;
 
-    railEl.innerHTML = railHTML([["pinned", pinned], ["active", active], ["inbox", inboxOpen], ["finished", finished, "Looks finished"], ["snoozed", snoozed], ["done", closed.concat(inboxClosed), "Done and dropped"]]);
+    railEl.innerHTML = railHTML([["pinned", pinned], ["active", active], ["inbox", inboxOpen], ["finished", finished, "Looks finished"], ["snoozed", snoozed]]);
 
     mainEl.innerHTML = [
       pinned.length ? laneHTML("pinned", pinned) : "",
       laneHTML("active", active, { empty: "No open threads." }),
       laneHTML("inbox", inboxOpen, { empty: "Nothing dumped. Run /dump <thought> in any session.", hint: "thoughts saved with /dump" }),
-      laneHTML("finished", finished, { collapsed: true, title: "Looks finished", hint: "recent sessions that read as answered; drop or restore", empty: "Every recent session read as ongoing." }),
+      laneHTML("finished", finished, { collapsed: true, title: "Looks finished", hint: "recent sessions that read as answered; check off or pin", empty: "Every recent session read as ongoing." }),
       laneHTML("snoozed", snoozed, { collapsed: true }),
-      laneHTML("done", closed.concat(inboxClosed), { collapsed: true, title: "Done and dropped" }),
     ].join("");
   }
 
@@ -309,7 +311,7 @@
     const doc = { slug, action, at: new Date().toISOString(), title: src.title || src.text || null, ...extra };
     try {
       await db.doc("actions/" + slug).set(doc);
-      toast({ done: "Marked done", drop: "Dropped", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
+      toast({ done: "Checked off", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
     } catch (e) {
       if (e && e.code === "invalid_argument") { canWrite = false; render(); }
       toast("Couldn't save: " + (e && e.message ? e.message : "unknown error"));

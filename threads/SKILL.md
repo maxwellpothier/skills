@@ -39,8 +39,8 @@ run's rundown for those instead of re-deriving it.
 Skip when `config.artifact_url` is null.
 
 - `Artifact read_db` with `db_op: list`, `collection: actions`. Each document is
-  `{slug, action, at, until?, title}` with `action` in done | drop | pin | unpin |
-  snooze | restore. Apply any whose `at` is newer than `state.actionsApplied[slug]`.
+  `{slug, action, at, until?, title}` with `action` in done | pin | unpin |
+  snooze | restore (`drop` is a legacy alias for done). Apply any whose `at` is newer than `state.actionsApplied[slug]`.
   Actions accumulate in the database; never delete them.
 - `Artifact comments` on the same URL. A comment left on a thread becomes that
   thread's `note`, prefixed with its date. Do not reply to or resolve threads.
@@ -70,16 +70,21 @@ Classification, biased toward showing too much:
 - `finished` — the session read as a one-off question that got answered, or
   the branch is older than `stale_branch_days` with no session about it.
   Shown collapsed, never hidden.
-- `snoozed`, `done`, `dropped` — only from page actions or an earlier state.
-  A snooze whose `until` is today or earlier becomes `active` again.
+- `snoozed` — only from a page action or an earlier state. A snooze whose
+  `until` is today or earlier becomes `active` again.
+
+`done` is a flag, not a state: a checked-off thread keeps its lane and shows a
+green checkmark. Only a page action sets or clears it. Stop listing a done
+thread once its `lastActive` falls outside `lookback_days` and no new evidence
+has appeared.
 
 Branches with no session and no memory still get a thread (source: branch)
 so nothing unmerged goes unlisted.
 
 Inbox: attach a dump to a thread only when the connection is unmistakable —
 it names the thread's branch, card, or title. Otherwise it stays a standalone
-inbox item with `slug` equal to its `id`. Dumps that were done or dropped on
-the page keep that state.
+inbox item with `slug` equal to its `id`. Dumps checked off on the page keep
+the flag.
 
 ## 5. Write state, render, publish
 
@@ -90,7 +95,7 @@ Update `state.json`:
   "lastRun": "<iso>",
   "threads": {
     "<slug>": {
-      "title": "", "project": "", "state": "active", "pinned": false, "snoozeUntil": null,
+      "title": "", "project": "", "state": "active", "done": false, "pinned": false, "snoozeUntil": null,
       "rundown": "", "next": "", "sources": [], "links": [], "branch": "",
       "sessions": [{"id": "", "lastAt": ""}], "memory": ["<abs path>"], "dumps": ["<inbox id>"],
       "note": "", "firstSeen": "<date>", "lastSeen": "<date>", "closedAt": null
@@ -104,7 +109,7 @@ Update `state.json`:
 
 Write the page data to `$SCRATCHPAD/threads-data.json`:
 `{today, threads: [...], inbox: [{id, slug, at, project, text, state}], liveSessions: [{name, project, idle}]}`
-(threads carry the fields from step 4 plus `state`, `pinned`, `snoozeUntil`, `note`, `dumps`).
+(threads carry the fields from step 4 plus `state`, `done`, `pinned`, `snoozeUntil`, `note`, `dumps`).
 
 ```bash
 python3 ~/.claude/skills/threads/render.py --data "$SCRATCHPAD/threads-data.json" --out "$SCRATCHPAD/threads.html"
