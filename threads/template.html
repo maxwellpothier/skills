@@ -430,6 +430,16 @@
     return true;
   }
 
+  railEl.addEventListener("click", (ev) => {
+    const link = ev.target.closest('.group[data-group="pinned"] a[data-slug]');
+    if (!link) return;
+    const card = document.getElementById("t-" + link.dataset.slug);
+    const box = card && card.closest("#lane-pinned .cards");
+    if (!box) return;
+    ev.preventDefault();
+    const top = card.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop - 2;
+    box.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+  });
   railEl.addEventListener("dragstart", (ev) => {
     const row = pinnedRow(ev.target);
     if (!row || !canWrite || row.getAttribute("draggable") !== "true") return;
