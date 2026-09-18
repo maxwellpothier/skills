@@ -1,129 +1,180 @@
 <title>Open Threads</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
   :root {
-    --ground: #f4f5f8; --surface: #ffffff; --surface-2: #eceef4;
-    --ink: #1c2233; --muted: #66708a; --line: #dce0ea;
-    --accent: #2b6b8e; --accent-ink: #ffffff;
-    --pin: #b8731c; --good: #2e7d5b; --warn: #b54a3f; --snooze: #6b5ca5; --quiet: #8b93a7;
-    --focus: #2b6b8e;
+    --bg: #f6f5f2; --surface: #ffffff; --surface-2: #eeece7;
+    --ink: #1c1f26; --ink-2: #4b5060; --ink-3: #7a7f8e;
+    --line: #d9d6cf; --line-2: #c4c0b6;
+    --accent: #0f5f68; --accent-ink: #ffffff; --accent-soft: #dcecec;
+    --ok: #1f7a4d; --ok-soft: #dff1e5;
+    --warn: #8a5a00; --warn-soft: #f7ebd0;
+    --err: #a3352d; --err-soft: #f8e1de;
+    --lane-active: #0f5f68; --lane-pinned: #8a5a00; --lane-finished: #7a7f8e;
+    --lane-snoozed: #6b3fa0; --lane-done: #1f7a4d; --lane-dropped: #a3352d; --lane-inbox: #4b5060;
+    --code-bg: #eeece7;
+    --shadow: 0 1px 2px rgba(28,31,38,.06), 0 8px 24px -16px rgba(28,31,38,.25);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --ground: #131720; --surface: #1b2130; --surface-2: #232b3d;
-      --ink: #e4e8f2; --muted: #98a1b8; --line: #2b3345;
-      --accent: #6fb0d2; --accent-ink: #0f1620;
-      --pin: #e0a04a; --good: #5fb08a; --warn: #e07b70; --snooze: #a79ae0; --quiet: #6f7891;
-      --focus: #6fb0d2;
+      --bg: #14161b; --surface: #1c1f26; --surface-2: #242830;
+      --ink: #eceae4; --ink-2: #b5b3ac; --ink-3: #85838d;
+      --line: #2f333d; --line-2: #3d424d;
+      --accent: #63c3c9; --accent-ink: #0e1a1c; --accent-soft: #1b3438;
+      --ok: #6fd39a; --ok-soft: #1c3327;
+      --warn: #e2b04f; --warn-soft: #3a2f16;
+      --err: #f08b82; --err-soft: #3d201d;
+      --lane-active: #63c3c9; --lane-pinned: #e2b04f; --lane-finished: #85838d;
+      --lane-snoozed: #b592e6; --lane-done: #6fd39a; --lane-dropped: #f08b82; --lane-inbox: #b5b3ac;
+      --code-bg: #242830;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --ground: #131720; --surface: #1b2130; --surface-2: #232b3d;
-    --ink: #e4e8f2; --muted: #98a1b8; --line: #2b3345;
-    --accent: #6fb0d2; --accent-ink: #0f1620;
-    --pin: #e0a04a; --good: #5fb08a; --warn: #e07b70; --snooze: #a79ae0; --quiet: #6f7891;
-    --focus: #6fb0d2;
+    --bg: #14161b; --surface: #1c1f26; --surface-2: #242830;
+    --ink: #eceae4; --ink-2: #b5b3ac; --ink-3: #85838d;
+    --line: #2f333d; --line-2: #3d424d;
+    --accent: #63c3c9; --accent-ink: #0e1a1c; --accent-soft: #1b3438;
+    --ok: #6fd39a; --ok-soft: #1c3327;
+    --warn: #e2b04f; --warn-soft: #3a2f16;
+    --err: #f08b82; --err-soft: #3d201d;
+    --lane-active: #63c3c9; --lane-pinned: #e2b04f; --lane-finished: #85838d;
+    --lane-snoozed: #b592e6; --lane-done: #6fd39a; --lane-dropped: #f08b82; --lane-inbox: #b5b3ac;
+    --code-bg: #242830;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.6);
     color-scheme: dark;
   }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--ground); color: var(--ink);
-    font: 15px/1.5 "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
-    padding-block: 32px 64px; padding-inline: 20px;
-  }
-  .mono { font-family: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace; font-size: 12.5px; }
-  main { max-width: 880px; margin: 0 auto; display: grid; gap: 28px; }
-  h1, h2, h3 { margin: 0; text-wrap: balance; }
-  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 24px; }
-  header h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
-  header .date { color: var(--muted); font-variant-numeric: tabular-nums; }
-  .counts { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--muted); font-size: 13.5px; margin-left: auto; }
-  .counts b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .live { color: var(--muted); font-size: 13.5px; }
-  .live .mono { color: var(--ink); }
-  section { display: grid; gap: 10px; }
-  .sec-head { display: flex; align-items: baseline; gap: 10px; }
-  .sec-head h2 { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .sec-head .n { color: var(--quiet); font-size: 12.5px; font-variant-numeric: tabular-nums; }
-  details.sec > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 10px; }
-  details.sec > summary::-webkit-details-marker { display: none; }
-  details.sec > summary::before { content: "▸"; color: var(--quiet); font-size: 12px; }
-  details.sec[open] > summary::before { content: "▾"; }
-  details.sec > summary h2 { font-size: 12.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  details.sec > .list { margin-top: 10px; }
-  .list { display: grid; gap: 10px; }
-  .empty { color: var(--quiet); font-size: 13.5px; padding: 6px 0; }
 
-  .thread {
-    background: var(--surface); border: 1px solid var(--line); border-left-width: 4px; border-radius: 6px;
-    padding: 14px 16px 12px 16px; display: grid; gap: 8px;
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px; line-height: 1.55; -webkit-font-smoothing: antialiased;
   }
-  .thread[data-state="active"] { border-left-color: var(--accent); }
-  .thread[data-state="pinned"] { border-left-color: var(--pin); }
-  .thread[data-state="finished"] { border-left-color: var(--quiet); }
-  .thread[data-state="snoozed"] { border-left-color: var(--snooze); }
-  .thread[data-state="done"] { border-left-color: var(--good); }
-  .thread[data-state="dropped"] { border-left-color: var(--warn); }
-  .thread[data-state="inbox"] { border-left-color: var(--line); background: var(--surface-2); }
-  .thread.closed .rundown, .thread.closed .next, .thread.closed .foot { display: none; }
-  .thread.closed { opacity: 0.85; }
-  .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; }
-  .top h3 { font-size: 16px; font-weight: 600; flex: 1 1 260px; }
-  .chip { font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--muted); white-space: nowrap; }
-  .chip.state { font-weight: 500; }
-  .thread[data-state="pinned"] .chip.state { color: var(--pin); }
-  .thread[data-state="snoozed"] .chip.state { color: var(--snooze); }
-  .thread[data-state="done"] .chip.state { color: var(--good); }
-  .thread[data-state="dropped"] .chip.state { color: var(--warn); }
-  .when { color: var(--muted); font-size: 12.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .rundown { margin: 0; max-width: 68ch; }
-  .next { margin: 0; max-width: 68ch; display: flex; gap: 8px; }
-  .next .lbl { color: var(--accent); font-weight: 600; font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; padding-top: 2px; white-space: nowrap; }
-  .note { margin: 0; max-width: 68ch; color: var(--muted); font-style: italic; }
-  .dumps { margin: 0; padding-left: 18px; color: var(--muted); }
-  .foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 12.5px; color: var(--muted); }
-  .badge { border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; font-size: 11.5px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .foot a { color: var(--accent); text-decoration: none; }
-  .foot a:hover { text-decoration: underline; }
-  .resume { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
-  .resume code { background: var(--surface-2); padding: 2px 6px; border-radius: 4px; color: var(--ink); }
-  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  button, select {
-    font: inherit; font-size: 12.5px; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
-    border-radius: 5px; padding: 3px 10px; cursor: pointer;
-  }
-  button:hover, select:hover { border-color: var(--accent); }
-  button:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-  button[disabled], select[disabled] { opacity: 0.5; cursor: default; }
-  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-  button.quiet { color: var(--muted); }
-  .toast {
-    position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
-    background: var(--ink); color: var(--ground); padding: 8px 14px; border-radius: 6px; font-size: 13px;
-    opacity: 0; transition: opacity 160ms; pointer-events: none;
-  }
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .9em; }
+  code { background: var(--code-bg); padding: .1em .35em; border-radius: 4px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .serif { font-family: "Newsreader", Georgia, "Times New Roman", serif; font-weight: 500; }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 40px 96px; padding-inline: clamp(16px, 4vw, 40px); }
+
+  header.top { display: grid; gap: 14px; max-width: 760px; margin-bottom: 40px; }
+  .eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  h1 { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: clamp(34px, 4.6vw, 50px); line-height: 1.05; letter-spacing: -.01em; margin: 0; text-wrap: balance; }
+  .lede { color: var(--ink-2); font-size: 17px; max-width: 64ch; margin: 0; }
+  .lede b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--ink-3); font-size: 13px; }
+  .meta-row b { color: var(--ink-2); font-weight: 500; }
+  .notice { border: 1px solid var(--line); border-left: 3px solid var(--warn); background: var(--surface); border-radius: 6px; padding: 12px 16px; color: var(--ink-2); font-size: 14px; max-width: 760px; }
+
+  .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 860px) { .layout { grid-template-columns: 1fr; gap: 28px; } }
+
+  nav.rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); display: grid; gap: 4px; font-size: 13.5px; max-height: calc(100vh - 40px); overflow-y: auto; }
+  @media (max-width: 860px) { nav.rail { position: static; max-height: none; } }
+  nav.rail .lane-h { margin-top: 14px; padding-left: 10px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; display: flex; justify-content: space-between; padding-right: 10px; }
+  nav.rail .lane-h:first-child { margin-top: 0; }
+  nav.rail a { display: grid; grid-template-columns: 18px 1fr; gap: 8px; align-items: start; padding: 6px 10px; border-radius: 6px; color: var(--ink-2); text-decoration: none; line-height: 1.35; }
+  nav.rail a:hover { background: var(--surface-2); color: var(--ink); }
+  nav.rail .dot { width: 14px; height: 14px; margin-top: 3px; border-radius: 50%; border: 1.5px solid var(--line-2); display: inline-grid; place-items: center; }
+  nav.rail a[data-lane="pinned"] .dot { border-color: var(--lane-pinned); background: var(--lane-pinned); }
+  nav.rail a[data-lane="active"] .dot { border-color: var(--lane-active); }
+  nav.rail a[data-lane="inbox"] .dot { border-color: var(--lane-inbox); border-style: dashed; }
+  nav.rail a[data-lane="done"] .dot, nav.rail a[data-lane="dropped"] .dot, nav.rail a[data-lane="snoozed"] .dot, nav.rail a[data-lane="finished"] .dot { border-color: var(--line-2); background: var(--surface-2); }
+  nav.rail a.muted { color: var(--ink-3); }
+
+  main { display: grid; gap: 36px; min-width: 0; }
+  .lane { display: grid; gap: 16px; }
+  .lane-title { display: flex; align-items: baseline; gap: 12px; }
+  .lane-title h2 { margin: 0; font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: 24px; }
+  .lane-title .n { color: var(--ink-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .lane-title .hint { color: var(--ink-3); font-size: 13.5px; }
+  details.lane > summary { list-style: none; cursor: pointer; display: flex; align-items: baseline; gap: 12px; }
+  details.lane > summary::-webkit-details-marker { display: none; }
+  details.lane > summary::after { content: "Show"; margin-left: auto; font-size: 13px; color: var(--accent); }
+  details.lane[open] > summary::after { content: "Hide"; }
+  details.lane > .cards { margin-top: 16px; }
+  .cards { display: grid; gap: 16px; }
+  .empty { color: var(--ink-3); font-size: 14px; padding: 4px 0; }
+
+  section.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); overflow: clip; }
+  section.card.closed { box-shadow: none; }
+  .card-head { padding: 20px 28px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 10px; }
+  .card.closed .card-head { border-bottom: 0; padding-bottom: 20px; }
+  @media (max-width: 600px) { .card-head, .card-body, .card-foot { padding-inline: 18px; } }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .chip { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 500; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line-2); color: var(--ink-2); }
+  .chip.type { background: var(--surface-2); border-color: transparent; }
+  .chip.lane { border-color: currentColor; }
+  .chip.lane-active { color: var(--lane-active); } .chip.lane-pinned { color: var(--lane-pinned); }
+  .chip.lane-finished { color: var(--lane-finished); } .chip.lane-snoozed { color: var(--lane-snoozed); }
+  .chip.lane-done { color: var(--lane-done); } .chip.lane-dropped { color: var(--lane-dropped); } .chip.lane-inbox { color: var(--lane-inbox); }
+  .chips .when { margin-left: auto; color: var(--ink-3); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  h3.title { font-family: "Newsreader", Georgia, serif; font-weight: 500; font-size: clamp(21px, 2.2vw, 26px); line-height: 1.15; margin: 0; text-wrap: balance; }
+  .card.closed h3.title { font-size: 19px; }
+  .repo { color: var(--ink-3); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+
+  .card-body { padding: 20px 28px 18px; display: grid; gap: 18px; }
+  .card-body p { margin: 0; max-width: 72ch; }
+  .card-body h4 { margin: 0 0 6px; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 500; }
+  .next { border-left: 2px solid var(--accent); padding-left: 14px; }
+  .note { background: var(--surface-2); border-radius: 8px; padding: 12px 16px; color: var(--ink-2); font-size: 14px; }
+  .note .who { color: var(--ink-3); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; font-weight: 500; margin-right: 8px; }
+  .dumps { margin: 0; padding-left: 18px; color: var(--ink-2); max-width: 72ch; }
+  .dumps li { margin-bottom: 4px; } .dumps li:last-child { margin-bottom: 0; }
+  .dumps .mono { color: var(--ink-3); margin-right: 6px; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dep { font-size: 12.5px; padding: 3px 9px; border-radius: 6px; background: var(--surface-2); color: var(--ink-2); text-decoration: none; }
+  .dep:hover { color: var(--ink); }
+  .dep.file { cursor: help; }
+
+  .card-foot { padding: 14px 28px 16px; display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; border-top: 1px dashed var(--line); background: color-mix(in srgb, var(--surface-2) 45%, var(--surface)); }
+  .card.closed .card-foot { border-top: 1px solid var(--line); }
+  button.primary { appearance: none; border: 0; background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; font-size: 13.5px; padding: 8px 16px; border-radius: 7px; cursor: pointer; }
+  button.primary:hover { filter: brightness(1.06); }
+  button.ghost, select.ghost { appearance: none; background: transparent; border: 1px solid var(--line-2); color: var(--ink-2); font: inherit; font-size: 13px; padding: 7px 12px; border-radius: 7px; cursor: pointer; }
+  button.ghost:hover, select.ghost:hover { color: var(--ink); border-color: var(--ink-3); }
+  select.ghost { padding-right: 28px; background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
+  button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+  .resume { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-3); }
+  .resume code { color: var(--ink-2); }
+  button.copy { appearance: none; background: transparent; border: 0; color: var(--accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 6px; border-radius: 5px; }
+  button.copy:hover { background: var(--accent-soft); }
+  .readonly { color: var(--ink-3); font-size: 13px; }
+  @media (max-width: 600px) { .resume { margin-left: 0; } .chips .when { margin-left: 0; } }
+
+  .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 6px; font-size: 13px; opacity: 0; transition: opacity 160ms; pointer-events: none; z-index: 10; }
   .toast.show { opacity: 1; }
-  .readonly { color: var(--muted); font-size: 13px; }
   @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
-  @media (max-width: 520px) { .resume { margin-left: 0; } .counts { margin-left: 0; } }
 </style>
 
-<main id="app"></main>
+<div class="wrap">
+  <header class="top" id="top"></header>
+  <div class="layout">
+    <nav class="rail" id="rail" aria-label="Threads"></nav>
+    <main id="main"></main>
+  </div>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script id="threads-data" type="application/json">__THREADS_DATA__</script>
 <script>
 (function () {
   const data = JSON.parse(document.getElementById("threads-data").textContent);
-  const app = document.getElementById("app");
+  const topEl = document.getElementById("top");
+  const railEl = document.getElementById("rail");
+  const mainEl = document.getElementById("main");
   const toastEl = document.getElementById("toast");
   const actions = new Map();
   let db = null;
   let canWrite = true;
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const longDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
   const fmtDate = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -132,7 +183,7 @@
     const days = Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
     if (days <= 0) return "today";
     if (days === 1) return "yesterday";
-    if (days < 7) return days + "d ago";
+    if (days < 7) return days + " days ago";
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   };
   const toast = (msg) => { toastEl.textContent = msg; toastEl.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => toastEl.classList.remove("show"), 1800); };
@@ -143,15 +194,15 @@
     if (a) {
       if (a.action === "done") out.state = "done";
       else if (a.action === "drop") out.state = "dropped";
-      else if (a.action === "restore") { out.state = t.state === "done" || t.state === "dropped" || t.state === "snoozed" ? "active" : t.state; out.snoozeUntil = null; }
+      else if (a.action === "restore") { out.state = ["done", "dropped", "snoozed"].includes(t.state) ? "active" : t.state; out.snoozeUntil = null; }
       else if (a.action === "snooze") { out.state = "snoozed"; out.snoozeUntil = a.until || null; }
       else if (a.action === "pin") out.pinned = true;
       else if (a.action === "unpin") out.pinned = false;
-      if (a.pinned !== undefined) out.pinned = !!a.pinned;
     }
     if (out.state === "snoozed" && out.snoozeUntil && out.snoozeUntil <= data.today) out.state = "active";
     return out;
   }
+  const lane = (e) => (e.pinned && (e.state === "active" || e.state === "finished")) ? "pinned" : e.state;
 
   function snoozeDates() {
     const base = new Date(data.today + "T00:00:00");
@@ -162,77 +213,100 @@
     return [["Tomorrow", iso(tomorrow)], ["Monday", iso(monday)], ["Next week", iso(nextWeek)]];
   }
 
-  function threadHTML(t, eff) {
-    const shown = eff.pinned && (eff.state === "active" || eff.state === "finished") ? "pinned" : eff.state;
-    const closed = shown === "done" || shown === "dropped" || shown === "snoozed";
-    const stateLabel = { pinned: "pinned", finished: "looks finished", snoozed: "snoozed until " + (eff.snoozeUntil || "?"), done: "done", dropped: "dropped", inbox: "inbox" }[shown];
-    const links = (t.links || []).map((l) => l.url.startsWith("file://")
-      ? `<span class="mono" title="${esc(l.url.slice(7))}">${esc(l.label)}: ${esc(l.url.split("/").pop())}</span>`
-      : `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)}</a>`).join("");
-    const badges = (t.sources || []).map((s) => `<span class="badge">${esc(s)}</span>`).join("");
-    const dumps = (t.dumps || []).length ? `<ul class="dumps">${t.dumps.map((d) => `<li><span class="mono">${esc(fmtDate(d.at))}</span> ${esc(d.text)}</li>`).join("")}</ul>` : "";
-    const resume = t.sessionId ? `<span class="resume"><code class="mono">claude --resume ${esc(t.sessionId.slice(0, 8))}</code><button class="quiet" data-copy="claude --resume ${esc(t.sessionId)}" title="Copy full resume command">copy</button></span>` : "";
+  const LANE_LABEL = { active: "Active", pinned: "Pinned", finished: "Looks finished", snoozed: "Snoozed", done: "Done", dropped: "Dropped", inbox: "Inbox" };
+
+  function cardHTML(t, e) {
+    const l = lane(e);
+    const closed = ["done", "dropped", "snoozed"].includes(l);
+    const stateText = l === "snoozed" ? "snoozed until " + (e.snoozeUntil || "?") : LANE_LABEL[l];
+    const links = (t.links || []).map((x) => x.url.startsWith("file://")
+      ? `<span class="dep file" title="${esc(x.url.slice(7))}">${esc(x.label)} · <span class="mono">${esc(x.url.split("/").pop())}</span></span>`
+      : `<a class="dep" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)}</a>`).join("");
+    const badges = (t.sources || []).map((s) => `<span class="chip type">${esc(s)}</span>`).join("");
+    const dumps = (t.dumps || []).length ? `<div><h4>From the inbox</h4><ul class="dumps">${t.dumps.map((d) => `<li><span class="mono">${esc(fmtDate(d.at))}</span>${esc(d.text)}</li>`).join("")}</ul></div>` : "";
+    const resume = t.sessionId ? `<span class="resume">resume <code>claude --resume ${esc(t.sessionId.slice(0, 8))}</code><button class="copy" data-copy="claude --resume ${esc(t.sessionId)}" title="Copy the full command">Copy</button></span>` : "";
     const snooze = snoozeDates().map(([label, iso]) => `<option value="${iso}">${label}</option>`).join("");
-    const controls = closed
-      ? `<button data-act="restore">Restore</button>`
-      : `<button data-act="done" class="primary">Done</button><button data-act="drop">Drop</button><button data-act="${eff.pinned ? "unpin" : "pin"}">${eff.pinned ? "Unpin" : "Pin"}</button><select data-act="snooze" aria-label="Snooze"><option value="">Snooze…</option>${snooze}</select>`;
-    return `<article class="thread${closed ? " closed" : ""}" data-slug="${esc(t.slug)}" data-state="${shown}">
-      <div class="top">
-        <h3>${esc(t.title)}</h3>
-        ${t.project ? `<span class="chip">${esc(t.project)}</span>` : ""}
-        ${stateLabel && shown !== "active" ? `<span class="chip state">${esc(stateLabel)}</span>` : ""}
-        <span class="when">${esc(fmtDate(t.lastActive))}</span>
+    const controls = !canWrite ? `<span class="readonly">Read-only view</span>` : closed
+      ? `<button class="ghost" data-act="restore">Restore</button>`
+      : `<button class="primary" data-act="done">Done</button><button class="ghost" data-act="drop">Drop</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
+    const body = closed ? "" : `<div class="card-body">
+        ${t.rundown ? `<p>${esc(t.rundown)}</p>` : ""}
+        ${t.next ? `<div class="next"><h4>Next</h4><p>${esc(t.next)}</p></div>` : ""}
+        ${t.note ? `<div class="note"><span class="who">Your note</span>${esc(t.note)}</div>` : ""}
+        ${dumps}
+        ${links ? `<div class="links">${links}</div>` : ""}
+      </div>`;
+    return `<section class="card${closed ? " closed" : ""}" id="t-${esc(t.slug)}" data-slug="${esc(t.slug)}">
+      <div class="card-head">
+        <div class="chips">
+          <span class="chip lane lane-${l}">${esc(stateText)}</span>
+          ${t.project ? `<span class="chip type">${esc(t.project)}</span>` : ""}
+          ${badges}
+          <span class="when">${esc(fmtDate(t.lastActive))}</span>
+        </div>
+        <h3 class="title">${esc(t.title)}</h3>
+        ${t.branch ? `<div class="repo"><span class="mono">${esc(t.branch)}</span></div>` : ""}
       </div>
-      ${t.rundown ? `<p class="rundown">${esc(t.rundown)}</p>` : ""}
-      ${t.next ? `<p class="next"><span class="lbl">Next</span><span>${esc(t.next)}</span></p>` : ""}
-      ${t.note ? `<p class="note">${esc(t.note)}</p>` : ""}
-      ${dumps}
-      <div class="foot">${badges}${t.branch ? `<span class="mono">${esc(t.branch)}</span>` : ""}${links}${resume}</div>
-      <div class="controls">${canWrite ? controls : `<span class="readonly">Read-only view</span>`}</div>
-    </article>`;
+      ${body}
+      <div class="card-foot">${controls}${resume}</div>
+    </section>`;
   }
 
-  function section(title, items, opts = {}) {
-    const list = items.length ? items.map(([t, e]) => threadHTML(t, e)).join("") : `<div class="empty">${esc(opts.empty || "Nothing here.")}</div>`;
-    if (opts.collapsed) {
-      return `<details class="sec"${opts.open ? " open" : ""}><summary><h2>${esc(title)}</h2><span class="n">${items.length}</span></summary><div class="list">${list}</div></details>`;
-    }
-    return `<section><div class="sec-head"><h2>${esc(title)}</h2><span class="n">${items.length}</span></div><div class="list">${list}</div></section>`;
+  function laneHTML(key, rows, opts = {}) {
+    const cards = rows.length ? rows.map(([t, e]) => cardHTML(t, e)).join("") : `<div class="empty">${esc(opts.empty || "Nothing here.")}</div>`;
+    const head = `<h2>${esc(opts.title || LANE_LABEL[key])}</h2><span class="n">${rows.length}</span>${opts.hint ? `<span class="hint">${esc(opts.hint)}</span>` : ""}`;
+    if (opts.collapsed) return `<details class="lane" id="lane-${key}"><summary>${head}</summary><div class="cards">${cards}</div></details>`;
+    return `<section class="lane" id="lane-${key}"><div class="lane-title">${head}</div><div class="cards">${cards}</div></section>`;
+  }
+
+  function railHTML(groups) {
+    return groups.filter(([, rows]) => rows.length).map(([key, rows, title]) =>
+      `<div class="lane-h"><span>${esc(title || LANE_LABEL[key])}</span><span>${rows.length}</span></div>` +
+      rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-lane="${lane(e)}" class="${["done", "dropped", "snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(t.title)}</span></a>`).join("")
+    ).join("");
   }
 
   function render() {
     const rows = (data.threads || []).map((t) => [t, effective(t)]);
-    const pinned = rows.filter(([, e]) => e.pinned && (e.state === "active" || e.state === "finished"));
-    const active = rows.filter(([, e]) => !e.pinned && e.state === "active");
-    const finished = rows.filter(([, e]) => !e.pinned && e.state === "finished");
-    const snoozed = rows.filter(([, e]) => e.state === "snoozed");
-    const closedRows = rows.filter(([, e]) => e.state === "done" || e.state === "dropped");
-    const inboxRows = (data.inbox || []).map((i) => [{ slug: i.slug, title: i.text, project: i.project, lastActive: i.at, state: i.state || "inbox", sources: ["dump"] }, effective({ slug: i.slug, state: i.state || "inbox" })]);
-    const inboxOpen = inboxRows.filter(([, e]) => e.state === "inbox" || e.state === "active");
-    const inboxClosed = inboxRows.filter(([, e]) => e.state !== "inbox" && e.state !== "active");
-    const live = (data.liveSessions || []);
-    const openCount = pinned.length + active.length;
+    const inboxRows = (data.inbox || []).map((i) => {
+      const t = { slug: i.slug, title: i.text, project: i.project, lastActive: i.at, state: i.state || "inbox", sources: ["dump"] };
+      return [t, effective(t)];
+    });
+    const by = (k) => rows.filter(([, e]) => lane(e) === k);
+    const pinned = by("pinned"), active = by("active"), finished = by("finished"), snoozed = by("snoozed");
+    const closed = rows.filter(([, e]) => ["done", "dropped"].includes(e.state));
+    const inboxOpen = inboxRows.filter(([, e]) => ["inbox", "active"].includes(e.state));
+    const inboxClosed = inboxRows.filter(([, e]) => !["inbox", "active"].includes(e.state));
+    const live = data.liveSessions || [];
+    const open = pinned.length + active.length;
 
-    app.innerHTML = `
-      <header>
-        <h1>Open Threads</h1>
-        <span class="date mono">${esc(data.today)}</span>
-        <div class="counts"><span><b>${openCount}</b> open</span><span><b>${inboxOpen.length}</b> inbox</span><span><b>${finished.length}</b> look finished</span><span><b>${snoozed.length}</b> snoozed</span></div>
-      </header>
-      ${live.length ? `<div class="live">Live right now: ${live.map((s) => `<span class="mono">${esc(s.name)}</span>${s.project ? " in " + esc(s.project) : ""}${s.idle ? " (idle)" : ""}`).join(", ")}</div>` : ""}
-      ${pinned.length ? section("Pinned", pinned) : ""}
-      ${section("Active", active, { empty: "No open threads. Enjoy it." })}
-      ${section("Inbox", inboxOpen, { empty: "Nothing dumped. Use /dump <thought> in any session." })}
-      ${section("Looks finished", finished, { collapsed: true, empty: "Every recent session read as ongoing." })}
-      ${section("Snoozed", snoozed, { collapsed: true })}
-      ${section("Done and dropped", closedRows.concat(inboxClosed), { collapsed: true })}
-    `;
+    topEl.innerHTML = `
+      <div class="eyebrow">${esc(longDate(data.today))} · every project under your roots</div>
+      <h1>Open Threads</h1>
+      <p class="lede"><b>${open}</b> thread${open === 1 ? "" : "s"} open${pinned.length ? `, <b>${pinned.length}</b> pinned` : ""}${inboxOpen.length ? `, <b>${inboxOpen.length}</b> in the inbox` : ""}${finished.length ? `, and <b>${finished.length}</b> that look finished` : ""}${snoozed.length ? `. <b>${snoozed.length}</b> snoozed` : ""}.
+        Each card says where the work stood when the last session ended and what the next move is. Done, Drop, Pin and Snooze are remembered for the next run.</p>
+      <div class="meta-row">
+        ${live.length ? `<span>Live now: ${live.map((s) => `<b class="mono">${esc(s.name)}</b>${s.project ? " in " + esc(s.project) : ""}${s.idle ? " (idle)" : ""}`).join(", ")}</span>` : `<span>No other session is live right now</span>`}
+        <span>Rebuilt with <b>/threads</b></span>
+        <span>Add a thought with <b>/dump</b></span>
+      </div>`;
+
+    railEl.innerHTML = railHTML([["pinned", pinned], ["active", active], ["inbox", inboxOpen], ["finished", finished, "Looks finished"], ["snoozed", snoozed], ["done", closed.concat(inboxClosed), "Done and dropped"]]);
+
+    mainEl.innerHTML = [
+      pinned.length ? laneHTML("pinned", pinned) : "",
+      laneHTML("active", active, { empty: "No open threads." }),
+      laneHTML("inbox", inboxOpen, { empty: "Nothing dumped. Run /dump <thought> in any session.", hint: "thoughts saved with /dump" }),
+      laneHTML("finished", finished, { collapsed: true, title: "Looks finished", hint: "recent sessions that read as answered; drop or restore", empty: "Every recent session read as ongoing." }),
+      laneHTML("snoozed", snoozed, { collapsed: true }),
+      laneHTML("done", closed.concat(inboxClosed), { collapsed: true, title: "Done and dropped" }),
+    ].join("");
   }
 
   async function write(slug, action, extra) {
     if (!db) { toast("Not connected to storage; nothing saved."); return; }
-    const title = (data.threads.find((t) => t.slug === slug) || data.inbox.find((i) => i.slug === slug) || {}).title;
-    const doc = { slug, action, at: new Date().toISOString(), title: title || null, ...extra };
+    const src = (data.threads || []).find((t) => t.slug === slug) || (data.inbox || []).find((i) => i.slug === slug) || {};
+    const doc = { slug, action, at: new Date().toISOString(), title: src.title || src.text || null, ...extra };
     try {
       await db.doc("actions/" + slug).set(doc);
       toast({ done: "Marked done", drop: "Dropped", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
@@ -242,7 +316,7 @@
     }
   }
 
-  app.addEventListener("click", (ev) => {
+  mainEl.addEventListener("click", (ev) => {
     const copy = ev.target.closest("[data-copy]");
     if (copy) {
       const txt = copy.getAttribute("data-copy");
@@ -251,14 +325,12 @@
     }
     const btn = ev.target.closest("button[data-act]");
     if (!btn) return;
-    const slug = btn.closest(".thread").dataset.slug;
-    write(slug, btn.dataset.act, {});
+    write(btn.closest(".card").dataset.slug, btn.dataset.act, {});
   });
-  app.addEventListener("change", (ev) => {
+  mainEl.addEventListener("change", (ev) => {
     const sel = ev.target.closest("select[data-act='snooze']");
     if (!sel || !sel.value) return;
-    const slug = sel.closest(".thread").dataset.slug;
-    write(slug, "snooze", { until: sel.value });
+    write(sel.closest(".card").dataset.slug, "snooze", { until: sel.value });
   });
 
   render();
