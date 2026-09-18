@@ -78,10 +78,13 @@ Classification, biased toward showing too much:
 - `snoozed` — only from a page action or an earlier state. A snooze whose
   `until` is today or earlier becomes `active` again.
 
-`done` is a flag, not a state: a thread the person closed with the Close button
-keeps its lane and shows a green checkmark. Only a page action sets or clears it. Stop listing a done
-thread once its `lastActive` falls outside `lookback_days` and no new evidence
-has appeared.
+`done` is set only by the Close button on the page and cleared only by a page
+`restore`. Within a page view a closed thread stays in place, crossed out with a
+green checkmark and an Undo button. The next run leaves it out of the page data
+entirely, so a freshly published page never shows a checkmark. It stays in
+`state.threads` so its slug is never re-minted and later evidence on the same
+topic does not bring it back. Drop it from state once its `lastActive` falls
+outside `lookback_days`.
 
 Branches with no session and no memory still get a thread (source: branch)
 so nothing unmerged goes unlisted.
@@ -115,7 +118,8 @@ Update `state.json`:
 
 Write the page data to `$SCRATCHPAD/threads-data.json`:
 `{today, pinOrder: [...], threads: [...], inbox: [{id, slug, at, project, text, state}], liveSessions: [{name, project, idle}]}`
-(threads carry the fields from step 4 plus `state`, `done`, `pinned`, `snoozeUntil`, `note`, `dumps`).
+(threads carry the fields from step 4 plus `state`, `pinned`, `snoozeUntil`, `note`, `dumps`;
+closed threads are omitted).
 The page shows pinned threads in `pinOrder` first, in that order, then any other
 pinned thread in the order given.
 
@@ -133,7 +137,6 @@ returned URL into `config.json` as `artifact_url`.
 
 ## 6. Reply
 
-Under 120 words: counts per section of open threads (closed ones as a single
-count), the link, and any thread that appeared for the first time with no memory
-behind it. No per-thread narration, and never call out a closed thread, even when
-new evidence touched it; the page has it.
+Under 120 words: counts per section, the link, and any thread that appeared for
+the first time with no memory behind it. No per-thread narration, and never
+mention a closed thread, even when new evidence touched it; the page has it.
