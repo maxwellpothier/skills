@@ -82,6 +82,8 @@
   details.lane[open] > summary::after { content: "HIDE \25BC"; }
   details.lane > .cards { margin-top: 18px; }
   .cards { display: grid; gap: 18px; }
+  #lane-pinned .cards { max-height: min(72vh, 820px); overflow-y: auto; padding: 2px 2px 2px; scrollbar-width: thin; scrollbar-color: var(--frame) transparent; }
+  #lane-pinned .cards > .card { scroll-margin-top: 4px; }
   .empty { color: var(--ink-2); font-size: 14px; padding: 4px 0; }
 
   section.card { background: var(--surface); border: 1.5px solid var(--frame); color: var(--ink); }
