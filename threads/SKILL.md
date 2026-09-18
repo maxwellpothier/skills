@@ -1,6 +1,6 @@
 ---
 name: threads
-description: Morning list of every open thread with Claude across your projects — recent sessions, memory, unmerged branches, and /dump notes — cross-checked, written up, and published as one artifact with Done / Drop / Pin / Snooze controls. Slash command only.
+description: Morning list of every open thread with Claude across your projects — recent sessions, memory, unmerged branches, and /dump notes — cross-checked, written up, and published as one artifact with Done / Pin / Snooze controls and a drag-to-reorder pinned lane. Slash command only.
 argument-hint: "[--dry-run]"
 disable-model-invocation: true
 ---
@@ -42,6 +42,11 @@ Skip when `config.artifact_url` is null.
   `{slug, action, at, until?, title}` with `action` in done | pin | unpin |
   snooze | restore (`drop` is a legacy alias for done). Apply any whose `at` is newer than `state.actionsApplied[slug]`.
   Actions accumulate in the database; never delete them.
+- `Artifact read_db` with `db_op: get`, `collection: settings`, `doc_id: pinOrder`.
+  The document is `{key: "pinOrder", order: [slug...], at}`: the order the person
+  gave the pinned lane by dragging sidebar entries. Replace `state.pinOrder` with
+  `order`, dropping slugs that no longer exist. A missing document means keep
+  the previous order.
 - `Artifact comments` on the same URL. A comment left on a thread becomes that
   thread's `note`, prefixed with its date. Do not reply to or resolve threads.
 
@@ -93,6 +98,7 @@ Update `state.json`:
 ```json
 {
   "lastRun": "<iso>",
+  "pinOrder": ["<slug>"],
   "threads": {
     "<slug>": {
       "title": "", "project": "", "state": "active", "done": false, "pinned": false, "snoozeUntil": null,
@@ -108,8 +114,10 @@ Update `state.json`:
 ```
 
 Write the page data to `$SCRATCHPAD/threads-data.json`:
-`{today, threads: [...], inbox: [{id, slug, at, project, text, state}], liveSessions: [{name, project, idle}]}`
+`{today, pinOrder: [...], threads: [...], inbox: [{id, slug, at, project, text, state}], liveSessions: [{name, project, idle}]}`
 (threads carry the fields from step 4 plus `state`, `done`, `pinned`, `snoozeUntil`, `note`, `dumps`).
+The page shows pinned threads in `pinOrder` first, in that order, then any other
+pinned thread in the order given.
 
 ```bash
 python3 ~/.claude/skills/threads/render.py --data "$SCRATCHPAD/threads-data.json" --out "$SCRATCHPAD/threads.html"

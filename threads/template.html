@@ -145,6 +145,19 @@
   button.ghost:hover, select.ghost:hover { color: var(--ink); border-color: var(--ink-3); }
   select.ghost { padding-right: 28px; background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 15px) 55%, calc(100% - 10px) 55%; background-size: 5px 5px; background-repeat: no-repeat; }
   button:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+  nav.rail .group { display: grid; gap: 4px; }
+  nav.rail a[draggable="true"] { grid-template-columns: 18px 1fr 14px; cursor: grab; }
+  nav.rail a[draggable="true"] .grip { color: var(--ink-3); font-size: 12px; line-height: 1.35; justify-self: end; opacity: 0; transition: opacity 120ms; }
+  nav.rail a[draggable="true"]:hover .grip, nav.rail a[draggable="true"]:focus-visible .grip { opacity: 1; }
+  nav.rail a[draggable="true"]:active { cursor: grabbing; }
+  nav.rail a.dragging { opacity: .45; background: var(--surface-2); outline: 1.5px dashed var(--line-2); outline-offset: -1.5px; }
+  nav.rail a.dragging .grip { opacity: 1; }
+  nav.rail a.moved { animation: settle-row 900ms ease-out; }
+  section.card.moved { animation: settle-card 900ms ease-out; }
+  @keyframes settle-row { 0%, 30% { background: var(--accent-soft); color: var(--ink); } 100% { background: transparent; } }
+  @keyframes settle-card { 0%, 30% { box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow); } 100% { box-shadow: var(--shadow); } }
+  @media (prefers-reduced-motion: reduce) { nav.rail a.moved, section.card.moved { animation: none; } }
+  nav.rail .rail-hint { padding: 2px 10px 0; font-size: 11.5px; color: var(--ink-3); }
   .resume { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-3); }
   .resume code { color: var(--ink-2); }
   button.copy { appearance: none; background: transparent; border: 0; color: var(--accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; padding: 4px 6px; border-radius: 5px; }
@@ -177,6 +190,36 @@
   const actions = new Map();
   let db = null;
   let canWrite = true;
+  let pinOrder = Array.isArray(data.pinOrder) ? data.pinOrder.slice() : [];
+  let pinnedSlugs = [];
+  let lastMoved = null;
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function flip(container, selector, mutate) {
+    if (reduceMotion) { mutate(); return; }
+    const before = new Map();
+    container.querySelectorAll(selector).forEach((el) => before.set(el.dataset.slug, el.getBoundingClientRect().top));
+    mutate();
+    const moving = [];
+    container.querySelectorAll(selector).forEach((el) => {
+      const prev = before.get(el.dataset.slug);
+      if (prev == null) return;
+      const dy = prev - el.getBoundingClientRect().top;
+      if (Math.abs(dy) < 1) return;
+      el.style.transition = "none";
+      el.style.transform = `translateY(${dy}px)`;
+      moving.push(el);
+    });
+    if (!moving.length) return;
+    moving[0].getBoundingClientRect();
+    requestAnimationFrame(() => {
+      moving.forEach((el) => {
+        el.style.transition = "transform 260ms cubic-bezier(.2, .7, .2, 1)";
+        el.style.transform = "";
+        el.addEventListener("transitionend", () => { el.style.transition = ""; }, { once: true });
+      });
+    });
+  }
 
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const longDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
@@ -207,6 +250,14 @@
     return out;
   }
   const lane = (e) => (e.pinned && (e.state === "active" || e.state === "finished")) ? "pinned" : e.state;
+
+  function sortPinned(rows) {
+    const idx = new Map(pinOrder.map((s, i) => [s, i]));
+    return rows
+      .map((row, i) => [row, idx.has(row[0].slug) ? idx.get(row[0].slug) : pinOrder.length + i])
+      .sort((a, b) => a[1] - b[1])
+      .map(([row]) => row);
+  }
 
   function snoozeDates() {
     const base = new Date(data.today + "T00:00:00");
@@ -264,20 +315,29 @@
   }
 
   function railHTML(groups) {
-    return groups.filter(([, rows]) => rows.length).map(([key, rows, title]) =>
-      `<div class="lane-h"><span>${esc(title || LANE_LABEL[key])}</span><span>${rows.length}</span></div>` +
-      rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-lane="${lane(e)}"${e.done ? " data-done" : ""} class="${["snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(t.title)}</span></a>`).join("")
-    ).join("");
+    return groups.filter(([, rows]) => rows.length).map(([key, rows, title]) => {
+      const drag = key === "pinned" && canWrite && rows.length > 1;
+      const links = rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-slug="${esc(t.slug)}" data-lane="${lane(e)}"${e.done ? " data-done" : ""}${drag ? ` draggable="true" title="Drag to reorder (Alt+\u2191/\u2193 from the keyboard)"` : ""} class="${["snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(t.title)}</span>${drag ? `<span class="grip" aria-hidden="true">\u22EE\u22EE</span>` : ""}</a>`).join("");
+      return `<div class="lane-h"><span>${esc(title || LANE_LABEL[key])}</span><span>${rows.length}</span></div>` +
+        `<div class="group" data-group="${key}">${links}</div>` +
+        (drag ? `<div class="rail-hint">drag to reorder</div>` : "");
+    }).join("");
   }
 
   function render() {
+    const focusedEl = document.activeElement;
+    const focused = !focusedEl ? null
+      : mainEl.contains(focusedEl) && focusedEl.dataset.act ? `#${focusedEl.closest(".card")?.id} [data-act="${focusedEl.dataset.act}"]`
+      : railEl.contains(focusedEl) && focusedEl.dataset.slug ? `#rail a[data-slug="${focusedEl.dataset.slug}"]`
+      : null;
     const rows = (data.threads || []).map((t) => [t, effective(t)]);
     const inboxRows = (data.inbox || []).map((i) => {
       const t = { slug: i.slug, title: i.text, project: i.project, lastActive: i.at, state: i.state || "inbox", sources: ["dump"] };
       return [t, effective(t)];
     });
     const by = (k) => rows.filter(([, e]) => lane(e) === k);
-    const pinned = by("pinned"), active = by("active"), finished = by("finished"), snoozed = by("snoozed");
+    const pinned = sortPinned(by("pinned")), active = by("active"), finished = by("finished"), snoozed = by("snoozed");
+    pinnedSlugs = pinned.map(([t]) => t.slug);
     const inboxOpen = inboxRows;
     const live = data.liveSessions || [];
     const doneCount = rows.concat(inboxRows).filter(([, e]) => e.done).length;
@@ -287,22 +347,34 @@
       <div class="eyebrow">${esc(longDate(data.today))} · every project under your roots</div>
       <h1>Open Threads</h1>
       <p class="lede"><b>${open}</b> thread${open === 1 ? "" : "s"} open${pinned.length ? `, <b>${pinned.length}</b> pinned` : ""}${inboxOpen.length ? `, <b>${inboxOpen.length}</b> in the inbox` : ""}${finished.length ? `, and <b>${finished.length}</b> that look finished` : ""}${snoozed.length ? `. <b>${snoozed.length}</b> snoozed` : ""}${doneCount ? `. <b>${doneCount}</b> checked off` : ""}.
-        Each card says where the work stood when the last session ended and what the next move is. Done, Pin and Snooze are remembered for the next run.</p>
+        Each card says where the work stood when the last session ended and what the next move is. Done, Pin, Snooze and the pinned order are remembered for the next run.</p>
       <div class="meta-row">
         ${live.length ? `<span>Live now: ${live.map((s) => `<b class="mono">${esc(s.name)}</b>${s.project ? " in " + esc(s.project) : ""}${s.idle ? " (idle)" : ""}`).join(", ")}</span>` : `<span>No other session is live right now</span>`}
         <span>Rebuilt with <b>/threads</b></span>
         <span>Add a thought with <b>/dump</b></span>
       </div>`;
 
-    railEl.innerHTML = railHTML([["pinned", pinned], ["active", active], ["inbox", inboxOpen], ["finished", finished, "Looks finished"], ["snoozed", snoozed]]);
+    flip(railEl, "a[data-slug]", () => {
+      railEl.innerHTML = railHTML([["pinned", pinned], ["active", active], ["inbox", inboxOpen], ["finished", finished, "Looks finished"], ["snoozed", snoozed]]);
+    });
 
-    mainEl.innerHTML = [
-      pinned.length ? laneHTML("pinned", pinned) : "",
-      laneHTML("active", active, { empty: "No open threads." }),
-      laneHTML("inbox", inboxOpen, { empty: "Nothing dumped. Run /dump <thought> in any session.", hint: "thoughts saved with /dump" }),
-      laneHTML("finished", finished, { collapsed: true, title: "Looks finished", hint: "recent sessions that read as answered; check off or pin", empty: "Every recent session read as ongoing." }),
-      laneHTML("snoozed", snoozed, { collapsed: true }),
-    ].join("");
+    flip(mainEl, "section.card[data-slug]", () => {
+      mainEl.innerHTML = [
+        pinned.length ? laneHTML("pinned", pinned, { hint: pinned.length > 1 ? "drag the sidebar entries to set the order" : "" }) : "",
+        laneHTML("active", active, { empty: "No open threads." }),
+        laneHTML("inbox", inboxOpen, { empty: "Nothing dumped. Run /dump <thought> in any session.", hint: "thoughts saved with /dump" }),
+        laneHTML("finished", finished, { collapsed: true, title: "Looks finished", hint: "recent sessions that read as answered; check off or pin", empty: "Every recent session read as ongoing." }),
+        laneHTML("snoozed", snoozed, { collapsed: true }),
+      ].join("");
+    });
+    if (lastMoved) {
+      document.querySelectorAll(`#rail a[data-slug="${lastMoved}"], section.card[data-slug="${lastMoved}"]`).forEach((el) => el.classList.add("moved"));
+      lastMoved = null;
+    }
+    if (focused) {
+      const el = document.querySelector(focused);
+      if (el && !el.disabled) el.focus();
+    }
   }
 
   async function write(slug, action, extra) {
@@ -318,6 +390,24 @@
     }
   }
 
+  async function saveOrder(order, moved) {
+    if (order.join("\n") === pinnedSlugs.join("\n")) { render(); return; }
+    if (!db) { render(); toast("Not connected to storage; nothing saved."); return; }
+    const prev = pinOrder;
+    lastMoved = moved || null;
+    pinOrder = order;
+    render();
+    try {
+      await db.doc("settings/pinOrder").set({ key: "pinOrder", order, at: new Date().toISOString() });
+      toast("Order saved");
+    } catch (e) {
+      pinOrder = prev;
+      if (e && e.code === "invalid_argument") canWrite = false;
+      render();
+      toast("Couldn't save: " + (e && e.message ? e.message : "unknown error"));
+    }
+  }
+
   mainEl.addEventListener("click", (ev) => {
     const copy = ev.target.closest("[data-copy]");
     if (copy) {
@@ -328,6 +418,76 @@
     const btn = ev.target.closest("button[data-act]");
     if (!btn) return;
     write(btn.closest(".card").dataset.slug, btn.dataset.act, {});
+  });
+
+  const pinnedRow = (el) => el && el.closest ? el.closest('#rail .group[data-group="pinned"] a[data-slug]') : null;
+  const pinnedGroup = () => railEl.querySelector('.group[data-group="pinned"]');
+  const domOrder = () => [...(pinnedGroup() || railEl).querySelectorAll("a[data-slug]")].map((a) => a.dataset.slug);
+  let dragSlug = null;
+  let dropped = false;
+
+  function previewAt(ev) {
+    const group = pinnedGroup();
+    if (!group || !group.contains(ev.target)) return false;
+    const dragged = group.querySelector(`a[data-slug="${dragSlug}"]`);
+    if (!dragged) return false;
+    let best = null, bestDist = Infinity;
+    group.querySelectorAll("a[data-slug]").forEach((row) => {
+      if (row === dragged) return;
+      const r = row.getBoundingClientRect();
+      const dist = Math.abs(ev.clientY - (r.top + r.height / 2));
+      if (dist < bestDist) { best = row; bestDist = dist; }
+    });
+    if (!best) return true;
+    const r = best.getBoundingClientRect();
+    const after = ev.clientY > r.top + r.height / 2;
+    const want = after ? best.nextElementSibling : best;
+    if (want === dragged || (after && best.nextElementSibling === dragged) || (!after && best.previousElementSibling === dragged)) return true;
+    flip(group, "a[data-slug]", () => { after ? best.after(dragged) : best.before(dragged); });
+    return true;
+  }
+
+  railEl.addEventListener("dragstart", (ev) => {
+    const row = pinnedRow(ev.target);
+    if (!row || !canWrite || row.getAttribute("draggable") !== "true") return;
+    dragSlug = row.dataset.slug;
+    dropped = false;
+    ev.dataTransfer.effectAllowed = "move";
+    ev.dataTransfer.setData("text/plain", dragSlug);
+    requestAnimationFrame(() => row.classList.add("dragging"));
+  });
+  railEl.addEventListener("dragenter", (ev) => {
+    const group = pinnedGroup();
+    if (dragSlug && group && group.contains(ev.target)) ev.preventDefault();
+  });
+  railEl.addEventListener("dragover", (ev) => {
+    if (!dragSlug) return;
+    if (!previewAt(ev)) return;
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "move";
+  });
+  railEl.addEventListener("drop", (ev) => {
+    if (!dragSlug) return;
+    ev.preventDefault();
+    dropped = true;
+    const slug = dragSlug;
+    dragSlug = null;
+    saveOrder(domOrder(), slug);
+  });
+  railEl.addEventListener("dragend", () => {
+    dragSlug = null;
+    if (!dropped) render();
+    dropped = false;
+  });
+  railEl.addEventListener("keydown", (ev) => {
+    const row = pinnedRow(ev.target);
+    if (!row || !ev.altKey || !canWrite || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
+    ev.preventDefault();
+    const order = pinnedSlugs.slice();
+    const i = order.indexOf(row.dataset.slug), j = i + (ev.key === "ArrowUp" ? -1 : 1);
+    if (i < 0 || j < 0 || j >= order.length) return;
+    [order[i], order[j]] = [order[j], order[i]];
+    saveOrder(order, row.dataset.slug);
   });
   mainEl.addEventListener("change", (ev) => {
     const sel = ev.target.closest("select[data-act='snooze']");
@@ -348,6 +508,19 @@
         render();
       },
       () => { toast("Live updates unavailable; reload to refresh."); }
+    );
+    db.collection("settings").onSnapshot(
+      (snap) => {
+        let incoming = null;
+        snap.docs.forEach((d) => {
+          const body = d.data();
+          if (body && body.key === "pinOrder" && Array.isArray(body.order)) incoming = body.order.slice();
+        });
+        if (!incoming || incoming.join("\n") === pinOrder.join("\n")) return;
+        pinOrder = incoming;
+        render();
+      },
+      () => {}
     );
     const user = await window.claude.use("user");
     if (user && user.can) {
