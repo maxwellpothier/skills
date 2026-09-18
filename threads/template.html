@@ -283,7 +283,7 @@
     const snooze = snoozeDates().map(([label, iso]) => `<option value="${iso}">${label}</option>`).join("");
     const controls = !canWrite ? `<span class="readonly">Read-only view</span>` : closed
       ? `<button class="ghost" data-act="restore">${e.done ? "Undo" : "Restore"}</button>`
-      : `<button class="primary" data-act="done">Done</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
+      : `<button class="primary" data-act="done">Close</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
     const body = closed ? "" : `<div class="card-body">
         ${t.rundown ? `<p>${esc(t.rundown)}</p>` : ""}
         ${t.next ? `<div class="next"><h4>Next</h4><p>${esc(t.next)}</p></div>` : ""}
@@ -294,7 +294,7 @@
     return `<section class="card${closed ? " closed" : ""}${e.done ? " done" : ""}" id="t-${esc(t.slug)}" data-slug="${esc(t.slug)}">
       <div class="card-head">
         <div class="chips">
-          ${e.done ? `<span class="chip done">\u2713 Done</span>` : ""}<span class="chip lane lane-${l}">${esc(stateText)}</span>
+          ${e.done ? `<span class="chip done">\u2713 Closed</span>` : ""}<span class="chip lane lane-${l}">${esc(stateText)}</span>
           ${t.project ? `<span class="chip type">${esc(t.project)}</span>` : ""}
           ${badges}
           <span class="when">${esc(fmtDate(t.lastActive))}</span>
@@ -346,8 +346,8 @@
     topEl.innerHTML = `
       <div class="eyebrow">${esc(longDate(data.today))} · every project under your roots</div>
       <h1>Open Threads</h1>
-      <p class="lede"><b>${open}</b> thread${open === 1 ? "" : "s"} open${pinned.length ? `, <b>${pinned.length}</b> pinned` : ""}${inboxOpen.length ? `, <b>${inboxOpen.length}</b> in the inbox` : ""}${finished.length ? `, and <b>${finished.length}</b> that look finished` : ""}${snoozed.length ? `. <b>${snoozed.length}</b> snoozed` : ""}${doneCount ? `. <b>${doneCount}</b> checked off` : ""}.
-        Each card says where the work stood when the last session ended and what the next move is. Done, Pin, Snooze and the pinned order are remembered for the next run.</p>
+      <p class="lede"><b>${open}</b> thread${open === 1 ? "" : "s"} open${pinned.length ? `, <b>${pinned.length}</b> pinned` : ""}${inboxOpen.length ? `, <b>${inboxOpen.length}</b> in the inbox` : ""}${finished.length ? `, and <b>${finished.length}</b> that look finished` : ""}${snoozed.length ? `. <b>${snoozed.length}</b> snoozed` : ""}${doneCount ? `. <b>${doneCount}</b> closed` : ""}.
+        Each card says where the work stood when the last session ended and what the next move is. Close, Pin, Snooze and the pinned order are remembered for the next run.</p>
       <div class="meta-row">
         ${live.length ? `<span>Live now: ${live.map((s) => `<b class="mono">${esc(s.name)}</b>${s.project ? " in " + esc(s.project) : ""}${s.idle ? " (idle)" : ""}`).join(", ")}</span>` : `<span>No other session is live right now</span>`}
         <span>Rebuilt with <b>/threads</b></span>
@@ -383,7 +383,7 @@
     const doc = { slug, action, at: new Date().toISOString(), title: src.title || src.text || null, ...extra };
     try {
       await db.doc("actions/" + slug).set(doc);
-      toast({ done: "Checked off", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
+      toast({ done: "Closed", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
     } catch (e) {
       if (e && e.code === "invalid_argument") { canWrite = false; render(); }
       toast("Couldn't save: " + (e && e.message ? e.message : "unknown error"));

@@ -1,6 +1,6 @@
 ---
 name: threads
-description: Morning list of every open thread with Claude across your projects — recent sessions, memory, unmerged branches, and /dump notes — cross-checked, written up, and published as one artifact with Done / Pin / Snooze controls and a drag-to-reorder pinned lane. Slash command only.
+description: Morning list of every open thread with Claude across your projects — recent sessions, memory, unmerged branches, and /dump notes — cross-checked, written up, and published as one artifact with Close / Pin / Snooze controls and a drag-to-reorder pinned lane. Slash command only.
 argument-hint: "[--dry-run]"
 disable-model-invocation: true
 ---
@@ -78,8 +78,8 @@ Classification, biased toward showing too much:
 - `snoozed` — only from a page action or an earlier state. A snooze whose
   `until` is today or earlier becomes `active` again.
 
-`done` is a flag, not a state: a checked-off thread keeps its lane and shows a
-green checkmark. Only a page action sets or clears it. Stop listing a done
+`done` is a flag, not a state: a thread the person closed with the Close button
+keeps its lane and shows a green checkmark. Only a page action sets or clears it. Stop listing a done
 thread once its `lastActive` falls outside `lookback_days` and no new evidence
 has appeared.
 
@@ -133,6 +133,7 @@ returned URL into `config.json` as `artifact_url`.
 
 ## 6. Reply
 
-Under 120 words: counts per section, the link, and any thread that appeared
-for the first time with no memory behind it. No per-thread narration; the page
-has it.
+Under 120 words: counts per section of open threads (closed ones as a single
+count), the link, and any thread that appeared for the first time with no memory
+behind it. No per-thread narration, and never call out a closed thread, even when
+new evidence touched it; the page has it.
