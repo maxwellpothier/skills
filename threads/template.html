@@ -146,6 +146,9 @@
   .resume code { color: var(--ink); }
   button.copy { appearance: none; background: transparent; border: 0; color: var(--accent); font-family: "Syne", sans-serif; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; font-weight: 700; cursor: pointer; padding: 4px 6px; text-decoration: underline; text-underline-offset: 3px; }
   .readonly { color: var(--ink-3); font-size: 13px; }
+  form.rename { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .rename-input { flex: 1 1 220px; min-width: 0; font-family: "Syne", sans-serif; font-weight: 700; text-transform: uppercase; font-size: 17px; line-height: 1.12; letter-spacing: .01em; color: var(--ink); background: var(--surface-2); border: 1.5px solid var(--frame); padding: 6px 10px; }
+  .rename-input:focus-visible { outline-offset: 1px; }
   @media (max-width: 600px) { .resume { margin-left: 0; } .chips .when { margin-left: 0; } }
 
   .toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--accent); color: var(--accent-ink); padding: 8px 14px; font-family: "Syne", sans-serif; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; font-weight: 700; opacity: 0; transition: opacity 160ms; pointer-events: none; z-index: 10; }
@@ -176,6 +179,9 @@
   let pinOrder = Array.isArray(data.pinOrder) ? data.pinOrder.slice() : [];
   let pinnedSlugs = [];
   let lastMoved = null;
+  const titles = new Map();
+  let editing = null;
+  let draft = "";
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function flip(container, selector, mutate) {
@@ -232,6 +238,7 @@
     if (out.state === "snoozed" && out.snoozeUntil && out.snoozeUntil <= data.today) out.state = "active";
     return out;
   }
+  const titleOf = (t) => titles.get(t.slug) || t.title;
   const lane = (e) => (e.pinned && (e.state === "active" || e.state === "finished")) ? "pinned" : e.state;
 
   function sortPinned(rows) {
@@ -266,7 +273,7 @@
     const snooze = snoozeDates().map(([label, iso]) => `<option value="${iso}">${label}</option>`).join("");
     const controls = !canWrite ? `<span class="readonly">Read-only view</span>` : closed
       ? `<button class="ghost" data-act="restore">${e.done ? "Undo" : "Restore"}</button>`
-      : `<button class="primary" data-act="done">Close</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
+      : `<button class="primary" data-act="done">Close</button><button class="ghost" data-act="${e.pinned ? "unpin" : "pin"}">${e.pinned ? "Unpin" : "Pin"}</button><button class="ghost" data-act="rename">Rename</button><select class="ghost" data-act="snooze" aria-label="Snooze"><option value="">Snooze</option>${snooze}</select>`;
     const body = closed ? "" : `<div class="card-body">
         ${t.rundown ? `<p>${esc(t.rundown)}</p>` : ""}
         ${t.next ? `<div class="next"><h4>Next</h4><p>${esc(t.next)}</p></div>` : ""}
@@ -282,7 +289,9 @@
           ${badges}
           <span class="when">${esc(fmtDate(t.lastActive))}</span>
         </div>
-        <h3 class="title">${esc(t.title)}</h3>
+        ${editing === t.slug
+          ? `<form class="rename" data-slug="${esc(t.slug)}"><input class="rename-input" value="${esc(draft)}" placeholder="${esc(t.title)}" maxlength="120" aria-label="Rename thread"><button class="primary" type="submit">Save</button><button class="ghost" type="button" data-act="cancel">Cancel</button></form>`
+          : `<h3 class="title">${esc(titleOf(t))}</h3>`}
         ${t.branch ? `<div class="repo"><span class="mono">${esc(t.branch)}</span></div>` : ""}
       </div>
       ${body}
@@ -300,7 +309,7 @@
   function railHTML(groups) {
     return groups.filter(([, rows]) => rows.length).map(([key, rows, title]) => {
       const drag = key === "pinned" && canWrite && rows.length > 1;
-      const links = rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-slug="${esc(t.slug)}" data-lane="${lane(e)}"${e.done ? " data-done" : ""}${drag ? ` draggable="true" title="Drag to reorder (Alt+\u2191/\u2193 from the keyboard)"` : ""} class="${["snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(t.title)}</span>${drag ? `<span class="grip" aria-hidden="true">\u22EE\u22EE</span>` : ""}</a>`).join("");
+      const links = rows.map(([t, e]) => `<a href="#t-${esc(t.slug)}" data-slug="${esc(t.slug)}" data-lane="${lane(e)}"${e.done ? " data-done" : ""}${drag ? ` draggable="true" title="Drag to reorder (Alt+\u2191/\u2193 from the keyboard)"` : ""} class="${["snoozed", "finished"].includes(lane(e)) ? "muted" : ""}"><span class="dot"></span><span>${esc(titleOf(t))}</span>${drag ? `<span class="grip" aria-hidden="true">\u22EE\u22EE</span>` : ""}</a>`).join("");
       return `<div class="lane-h"><span>${esc(title || LANE_LABEL[key])}</span><span>${rows.length}</span></div>` +
         `<div class="group" data-group="${key}">${links}</div>` +
         (drag ? `<div class="rail-hint">drag to reorder</div>` : "");
@@ -354,21 +363,53 @@
       document.querySelectorAll(`#rail a[data-slug="${lastMoved}"], section.card[data-slug="${lastMoved}"]`).forEach((el) => el.classList.add("moved"));
       lastMoved = null;
     }
-    if (focused) {
+    if (focused && !editing) {
       const el = document.querySelector(focused);
       if (el && !el.disabled) el.focus();
+    }
+    if (editing) {
+      const inp = mainEl.querySelector(".rename-input");
+      if (inp && document.activeElement !== inp) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
     }
   }
 
   async function write(slug, action, extra) {
     if (!db) { toast("Not connected to storage; nothing saved."); return; }
     const src = (data.threads || []).find((t) => t.slug === slug) || (data.inbox || []).find((i) => i.slug === slug) || {};
-    const doc = { slug, action, at: new Date().toISOString(), title: src.title || src.text || null, ...extra };
+    const doc = { slug, action, at: new Date().toISOString(), title: titles.get(slug) || src.title || src.text || null, ...extra };
     try {
       await db.doc("actions/" + slug).set(doc);
       toast({ done: "Closed", pin: "Pinned", unpin: "Unpinned", snooze: "Snoozed until " + (extra.until || ""), restore: "Restored" }[action]);
     } catch (e) {
       if (e && e.code === "invalid_argument") { canWrite = false; render(); }
+      toast("Couldn't save: " + (e && e.message ? e.message : "unknown error"));
+    }
+  }
+
+  function threadBySlug(slug) {
+    return (data.threads || []).find((t) => t.slug === slug) || (data.inbox || []).find((i) => i.slug === slug) || {};
+  }
+
+  async function saveTitle(slug, value) {
+    const src = threadBySlug(slug);
+    const generated = src.title || src.text || "";
+    const name = String(value || "").trim().slice(0, 120);
+    const title = (!name || name === generated) ? "" : name;
+    const prev = titles.get(slug) || "";
+    editing = null;
+    draft = "";
+    if (title === prev) { render(); return; }
+    if (!db) { render(); toast("Not connected to storage; nothing saved."); return; }
+    if (title) titles.set(slug, title); else titles.delete(slug);
+    lastMoved = slug;
+    render();
+    try {
+      await db.doc("titles/" + slug).set({ slug, title, generated, at: new Date().toISOString() });
+      toast(title ? "Renamed" : "Name reset");
+    } catch (e) {
+      if (prev) titles.set(slug, prev); else titles.delete(slug);
+      if (e && e.code === "invalid_argument") canWrite = false;
+      render();
       toast("Couldn't save: " + (e && e.message ? e.message : "unknown error"));
     }
   }
@@ -400,7 +441,15 @@
     }
     const btn = ev.target.closest("button[data-act]");
     if (!btn) return;
-    write(btn.closest(".card").dataset.slug, btn.dataset.act, {});
+    const slug = btn.closest(".card").dataset.slug;
+    if (btn.dataset.act === "rename") {
+      editing = slug;
+      draft = titles.get(slug) || threadBySlug(slug).title || "";
+      render();
+      return;
+    }
+    if (btn.dataset.act === "cancel") { editing = null; draft = ""; render(); return; }
+    write(slug, btn.dataset.act, {});
   });
 
   const pinnedRow = (el) => el && el.closest ? el.closest('#rail .group[data-group="pinned"] a[data-slug]') : null;
@@ -482,6 +531,23 @@
     [order[i], order[j]] = [order[j], order[i]];
     saveOrder(order, row.dataset.slug);
   });
+  mainEl.addEventListener("input", (ev) => {
+    const inp = ev.target.closest(".rename-input");
+    if (inp) draft = inp.value;
+  });
+  mainEl.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape" || !ev.target.closest(".rename-input")) return;
+    ev.preventDefault();
+    editing = null;
+    draft = "";
+    render();
+  });
+  mainEl.addEventListener("submit", (ev) => {
+    const form = ev.target.closest("form.rename");
+    if (!form) return;
+    ev.preventDefault();
+    saveTitle(form.dataset.slug, form.querySelector(".rename-input").value);
+  });
   mainEl.addEventListener("change", (ev) => {
     const sel = ev.target.closest("select[data-act='snooze']");
     if (!sel || !sel.value) return;
@@ -501,6 +567,14 @@
         render();
       },
       () => { toast("Live updates unavailable; reload to refresh."); }
+    );
+    db.collection("titles").onSnapshot(
+      (snap) => {
+        titles.clear();
+        snap.docs.forEach((d) => { const body = d.data(); if (body && body.slug && body.title) titles.set(body.slug, body.title); });
+        render();
+      },
+      () => {}
     );
     db.collection("settings").onSnapshot(
       (snap) => {

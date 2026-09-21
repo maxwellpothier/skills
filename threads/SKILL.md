@@ -47,6 +47,8 @@ Skip when `config.artifact_url` is null.
   gave the pinned lane by dragging sidebar entries. Replace `state.pinOrder` with
   `order`, dropping slugs that no longer exist. A missing document means keep
   the previous order.
+- Renames live in the `titles` collection and the page overlays them on the generated
+  titles at load, so a rebuild needs nothing from you. Never write to that collection.
 - `Artifact comments` on the same URL. A comment left on a thread becomes that
   thread's `note`, prefixed with its date. Do not reply to or resolve threads.
 
