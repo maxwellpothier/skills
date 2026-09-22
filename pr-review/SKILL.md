@@ -1,6 +1,6 @@
 ---
 name: pr-review
-description: Hostile senior-dev review of a branch's diff vs the repo's default branch, with every finding verified before reporting. Opens with what the branch is trying to do and a net-effect score, then walks through findings one at a time in plain language. Manual only. Takes a branch name and optional ClickUp task ID.
+description: Hostile senior-dev review of a branch's diff vs the repo's default branch, with every finding verified before reporting. Opens with what the branch is trying to do and a net-effect label, then walks through findings one at a time in plain language. Manual only. Takes a branch name and optional ClickUp task ID.
 disable-model-invocation: true
 ---
 
@@ -21,12 +21,7 @@ Report the results as a conversation, not a dump.
 Keep the whole opening short enough to read without scrolling.
 
 - **What the branch is trying to do.** Two or three sentences in the reader's terms: what is different for the user or the codebase after this merges, and why someone wanted that. Not a file-by-file tour. If a task was provided, add one line on whether the branch fits the task's scope (does more, does less, does something else).
-- **Net effect on the codebase.** A score from −5 (leaves the codebase worse) to +5 (clearly better), with one line of evidence for each of the two things the score weighs:
-  - _Industry practice_ — does the change do what good engineers would do here today: correct, safe, tested where it matters, no reinvented wheels, sensible boundaries.
-  - _Fit with the existing code_ — does it use the repo's own patterns, names and layers, or does it add a second way of doing something the repo already does.
-
-  The score judges the merged result, not the finding count: a branch with three small findings that replaces a hairy module can still be a +4. Say the score first, then the evidence. Never give the score without the evidence.
-
+- **Net effect on the codebase.** Harmful, Neutral, Helpful, or Fundamental: does the core change make future work here harder or easier? Most changes, bug fixes included, are Neutral. Judge the change, not the findings. One line of evidence.
 - **Findings, in one breath.** A numbered list, one line each, with severity (**Blocker** / **Should-fix** / **Nice-to-have**), most severe first. Titles only, no detail yet.
 - **Offer the walkthrough.** If any finding is a Blocker or Should-fix, end with "Ready to get into these?" and stop. If there are only Nice-to-haves, or nothing survived verification, say so in one line with a note on what you checked, and finish here. No walkthrough.
 
@@ -40,4 +35,4 @@ The user may ask questions, push back, or dismiss the finding as not actually im
 
 ## 3. Close with what stands
 
-After the last finding, give a short wrap-up: which findings survived the discussion and which were dismissed (with the user's reasoning), and whether the net-effect score moved as a result. Keep it in a shape that can be acted on or pasted into the PR.
+After the last finding, give a short wrap-up: which findings survived the discussion and which were dismissed (with the user's reasoning), and whether the net-effect label changed. Keep it in a shape that can be acted on or pasted into the PR.
