@@ -32,7 +32,7 @@ Read the digest. It holds `sessions` (recent transcripts under the roots),
 project-type bodies), `repos` (unmerged branches and worktrees), `state`, and
 `inbox`. Sessions and memory files already in `state` with an unchanged
 timestamp come back with `unchanged: true` and no body — reuse the previous
-run's rundown for those instead of re-deriving it.
+run's rundown for those when it already fits the shape in step 4.
 
 ## 3. Pull what the person did on the page
 
@@ -61,15 +61,31 @@ several sessions, a memory file, and a branch about the same thing are one
 thread. Reuse the slug from `state.threads` whenever the topic already exists;
 mint a new kebab-case slug only for genuinely new work. Slugs never change.
 
+The card exists to jog the memory of the person who did the work, not to log
+what happened. Write it in words you could say out loud to someone outside the
+team; if a word would need explaining, replace it.
+
 For each thread write:
-- `title` — a noun phrase the person would recognize
-- `rundown` — two or three sentences: where it stood when the last session
-  ended, from the transcript tail and the memory body. Plain facts, no praise.
-- `next` — the next move if the evidence names one, otherwise omit
+- `title` — what the work is, as you would name it in conversation. Six words
+  or fewer.
+- `rundown` — one sentence: what this is and why it matters. Name the goal, not
+  the history. A second sentence only when `next` does not already imply where
+  things stand.
+- `next` — one concrete move in one imperative sentence ("Open the PR", "Answer
+  the sign-off questions"). "Waiting on <person> for <thing>" counts. Omit if
+  the evidence names none.
 - `sources` — subset of memory, transcript, branch, card
 - `links` — tracker cards and report files named in the evidence
 - `sessionId` — the most recent session on the thread, for `claude --resume`
 - `project`, `branch`, `lastActive`
+
+No dates, commit hashes, card ids, file paths, package versions, or branch
+names in `title`, `rundown`, or `next`. Each has a home on the card already:
+the branch chip, the links row, the resume command, the date chip. A detail
+with no home is dropped, not squeezed in.
+
+A stored rundown that does not fit this shape gets rewritten from the stored
+text plus whatever new evidence the digest carries.
 
 Classification, biased toward showing too much:
 - `active` — the last session ended mid-work, memory calls something open, or
