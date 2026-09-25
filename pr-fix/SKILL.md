@@ -19,7 +19,7 @@ Keep a ledger of every finding handled so far: fixed (with commit sha), parked, 
 3. **Fix.** Fix mechanical Blockers and Should-fixes one at a time with the smallest change that resolves each, one commit per finding naming it. Park judgment calls for the user. Skip Nice-to-haves.
 4. **Gate.** After each fix, run the repo's lint, type check, and tests for the touched scope. If a gate newly fails and the fix can't be repaired within the finding's scope, revert that commit and park the finding.
 
-Stop when a round returns no verified Blocker or Should-fix, when a round only re-raises ledger items, or after 4 rounds.
+Stop when a round returns no verified Blocker or Should-fix, when a round only re-raises ledger items that no later fix broke, or after 4 rounds.
 
 ## Fixes must not
 
@@ -30,4 +30,4 @@ Stop when a round returns no verified Blocker or Should-fix, when a round only r
 
 ## Report
 
-Say why the loop stopped and how many rounds ran. Then a table: finding, severity, outcome (fixed with sha, parked, skipped, or dismissed), one-line reason. Give each parked judgment call enough context to decide on. The shas let the user read each fix with `git show`; suggest `/pr-review <branch>` for a fresh full review.
+Say why the loop stopped and how many rounds ran. Then a table: finding, severity, outcome (fixed with sha, parked, skipped, dismissed, or open if still unresolved when the loop stopped), one-line reason. Give each parked judgment call enough context to decide on. The shas let the user read each fix with `git show`; suggest `/pr-review <branch>` for a fresh full review.
