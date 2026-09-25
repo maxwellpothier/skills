@@ -30,4 +30,4 @@ Stop when a round returns no verified Blocker or Should-fix, when a round only r
 
 ## Report
 
-Say why the loop stopped and how many rounds ran. Then a table: finding, severity, outcome (fixed with sha, parked, or dismissed), one-line reason. Give each parked judgment call enough context to decide on. Suggest `/pr-review` on the result to read the fixes commit by commit.
+Say why the loop stopped and how many rounds ran. Then a table: finding, severity, outcome (fixed with sha, parked, or dismissed), one-line reason. Give each parked judgment call enough context to decide on. The shas let the user read each fix with `git show`; suggest `/pr-review <branch>` for a fresh full review.
