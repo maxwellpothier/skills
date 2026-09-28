@@ -1,6 +1,6 @@
 # Personal Claude Code skills
 
-Cloned to `~/.claude/skills/` on each machine. Each top-level directory is a skill (`SKILL.md` is the entry point).
+Cloned to `~/.claude/skills/` on each machine. Each top-level directory is a skill (`SKILL.md` is the entry point). Skills I no longer use live in `ARCHIVE/`, which Claude Code does not load.
 
 ## Disclaimer
 
