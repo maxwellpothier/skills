@@ -1,18 +1,20 @@
 ---
 name: pr-review
-description: Hostile senior-dev review of a branch's diff vs the repo's default branch, with every finding verified before reporting. Opens with what the branch is trying to do and a net-effect label, then walks through findings one at a time in plain language. Manual only. Takes a branch name and optional ClickUp task ID.
+description: Hostile senior-dev review of a branch against the repo's default branch, with every finding verified before reporting. Opens with what the branch is trying to do and a net-effect label, then walks through findings one at a time. Takes a branch name and optional ClickUp task ID.
 disable-model-invocation: true
 ---
 
 # PR Review
 
-Arguments: `$ARGUMENTS` — `<branch> [clickup-task-id]`.
+Arguments: `$ARGUMENTS` — `<branch> [clickup-task-id]`. Compare the branch to the repo's default branch, both as they are on origin now.
 
-Resolve the base branch (`git symbolic-ref --short refs/remotes/origin/HEAD`, else probe `origin/main` then `origin/master`). Run `git fetch origin <base>`, then `git diff origin/<base>...<branch>` and read the full diff, pulling each changed file in full where context is needed. If a task ID was given, fetch it with `mcp__claude_ai_ClickUp__clickup_get_task` for intended scope. Read any relevant `CLAUDE.md` for conventions and gotchas. If the repo has a `CONTEXT.md` (follow `CONTEXT-MAP.md` to the right one if there is more than one), read it: its names are the names you will use when you explain things.
+Review the diff as a hostile reviewer who hates this implementation. Look for logic bugs, edge cases, regressions, security issues, silent negative behavioral changes, and violations of any `CLAUDE.md` rules.
 
-Review the diff as a hostile reviewer who hates this implementation. Look for logic bugs, edge cases, regressions, security issues, silent negative behavioral changes, and violations of any `CLAUDE.md` rules. Call out conspicuous absences: schema changes without migrations, logic without tests, security-sensitive changes without updated guards.
+Run that review as parallel fresh-context subagents on Opus. Give each the diff range, the task scope, the paragraph above verbatim, and one lens: logic and edge cases; regressions and behavior changes traced through callers; completeness against the intent (the same bug or pattern left elsewhere, half-done migrations, task requirements dropped); security, `CLAUDE.md` rules, and conspicuous absences (schema changes without migrations, logic without tests, security-sensitive changes without updated guards); simplifications to the code this branch touches, including trades that give up a little for much simpler code; or no lens. On a large diff, also split by file group; when it touches auth, payments, user input, or secrets, give security its own reviewer. Reviewers hunt, they don't verify: each returns every finding, one line each, with `file:line` and a concrete failure scenario (for a simplification: what gets simpler and what, if anything, is given up).
 
-Verify every concern before reporting: re-read the actual code (not just the hunk), trace the call path, check whether it's handled elsewhere, web-search if it hinges on framework/library/platform behavior. Drop anything you can't confirm or misread, and drop pure style nits. For each surviving finding, propose 1–2 fixes (or describe the approach and tradeoffs if complex).
+Every subagent only reads: it never changes the working tree, the index, the stash, or which branch is checked out.
+
+Dedupe the merged findings, then give each one its own fresh subagent told to disprove it against the real code and its callers, not just the hunk: check whether it's handled elsewhere, and look up framework or library behavior when the finding hinges on it (if it can't, it returns the finding unresolved with the open question). A simplification is disproved if it breaks behavior something relies on beyond what it admits giving up. Each returns confirmed or refuted with evidence, under 100 words. Drop refuted findings and pure style nits, then read the cited code yourself for each survivor, and settle any open questions, before reporting it.
 
 Report the results as a conversation, not a dump.
 
@@ -27,11 +29,11 @@ Keep the whole opening short enough to read without scrolling.
 
 ## 2. Walk through findings one at a time
 
-Wait for the user before each finding. Present one finding in full, then stop.
+Present one finding in full, then stop and wait for the user.
 
-Explain each finding as if the reader has just asked "wait, what?": give a little context first (where this code sits in the flow, what it is supposed to do), then what is actually wrong, then why it matters. Write in ASD-STE100 Simplified Technical English: short sentences, one idea each, active voice, common words, no jargon the repo itself does not use. Name things the way `CONTEXT.md` names them, or failing that the way the codebase itself does. Cite `file:line` so they can look. Then give the proposed fix(es).
+Explain each finding as if the reader has just asked "wait, what?": give a little context first (where this code sits in the flow, what it is supposed to do), then what is actually wrong, then why it matters. Use short sentences, one idea each, active voice, and the repo's own names for things (its `CONTEXT.md`'s, if it has one), with no jargon beyond them. Cite `file:line` so they can look. Then propose a fix or two, or the approach and tradeoffs if it's complex.
 
-The user may ask questions, push back, or dismiss the finding as not actually important. Engage honestly: if their reasoning holds, agree and note why it was dismissed; if it doesn't, say so — don't fold just because they pushed. Only move to the next finding when they're ready.
+If the user pushes back or dismisses the finding, engage honestly: if their reasoning holds, agree and note why it was dismissed; if it doesn't, say so — don't fold just because they pushed. Move on when they're ready.
 
 ## 3. Close with what stands
 
