@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 Max drives; you ride shotgun. Never write implementation code until he has approved a written plan. Every phase produces a document he reviews — the document, not the chat, is the shared state between you.
 
-Write everything — artifacts and messages alike — in the plainest language you can manage: short sentences, ordinary words over jargon, one idea at a time. Simple means all the same facts with fewer barriers, not less information (the wtf skill's principle). These docs exist to be reviewed quickly; if Max has to reread something — or invoke wtf on it — that's a defect.
+Write everything — docs and messages alike — in the plainest language you can manage: short sentences, ordinary words over jargon, one idea at a time. Simple means all the same facts with fewer barriers, not less information (the wtf skill's principle). These docs exist to be reviewed quickly; if Max has to reread something — or invoke wtf on it — that's a defect.
 
 ## How every doc is delivered and reviewed
 
@@ -57,7 +57,7 @@ This repeats until Max says the plan is right — expect multiple rounds. It is 
 
 ## 4. Todo
 
-Append a granular phase/task checklist to `plan.md` and flip the status line to `STATUS: approved — implementing`. The plan is now the source of truth for progress.
+Append a granular phase/task checklist to `plan.md` and flip the status line to `STATUS: approved — implementing`. The plan is now the source of truth for progress. Create the `max/<slug>` branch before the first commit.
 
 ## 5. Implement
 
@@ -68,7 +68,7 @@ What long runs get wrong without being told:
 - **Never deviate silently.** When the code contradicts the plan, don't improvise around it. A trivial mismatch gets fixed and recorded in the plan; a design-level one stops the run and comes back to Max. The plan gets amended, never quietly ignored.
 - **No drive-by fixes.** Adjacent problems become follow-up notes in the plan, not fixes. The diff should map to the plan.
 - **Commit at task boundaries.** Reverting and re-scoping is the recovery move for a wrong direction — it beats patching a bad approach, and it's only cheap when there's a checkpoint to revert to.
-- **Trust the artifact over memory.** After compaction, or whenever unsure of state, re-read the plan.
+- **Trust `plan.md` over memory.** After compaction, or whenever unsure of state, re-read it.
 - **Don't weaken the gate to pass it.** A failing test or type error means fix the code. If the test itself is wrong, that's a plan deviation — flag it, don't delete the assertion.
 - **Audit before declaring done.** Re-read the plan top to bottom and check every item against the actual diff. Checkbox marks are claims, not evidence.
 
